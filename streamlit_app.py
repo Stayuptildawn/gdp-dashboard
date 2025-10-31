@@ -1,151 +1,73 @@
 import streamlit as st
 import pandas as pd
-import math
-from pathlib import Path
+import os
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
-)
+# Ensure folders exist
+os.makedirs("elements", exist_ok=True)
+os.makedirs("data", exist_ok=True)
 
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
+# Load user database from CSV
+user_db_path = "data/users.csv"
+if not os.path.exists(user_db_path):
+    # Create a starter CSV file with admin user if it doesn't exist
+    df = pd.DataFrame([{"username": "admin", "password": "aA1234"}])
+    df.to_csv(user_db_path, index=False)
+else:
+    df = pd.read_csv(user_db_path)
 
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
+# --- UI code (use elements PNGs as before, omitted here for brevity) ---
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
+# Example login check (insert after user presses the "Sign in" button)
+if st.button("Sign in"):
+    user_row = df[(df["username"] == email) & (df["password"] == password)]
+    if not user_row.empty:
+        st.success(f"Welcome, {email}!")
+    else:
+        st.error("Invalid login.")
 
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
+# --- rest of the image and layout code ---
 
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
+# Custom CSS for layout and appearance
+st.markdown("""
+    <style>
+    .main { padding: 0 !important; }
+    .stApp {
+        background-color: #fafafa;
+    }
+    .login-container {
+        display: flex; flex-direction: row; height: 100vh; align-items: center; justify-content: space-between;
+    }
+    .login-left {
+        width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding-left: 10vw;
+    }
+    .login-right {
+        width: 50%; display: flex; align-items: center; justify-content: center;
+    }
+    .form-group { margin-bottom: 18px; }
+    </style>
+""", unsafe_allow_html=True)
 
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
+st.markdown('<div class="login-container">', unsafe_allow_html=True)
 
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
+# Left side (login form and elements)
+st.markdown('<div class="login-left">', unsafe_allow_html=True)
+st.image("elements/Headline.png")
+st.image("elements/Email Form.png", use_column_width=False)
+email = st.text_input("", key="email_form", label_visibility="collapsed", placeholder="Enter your email")
+st.image("elements/Password Form.png", use_column_width=False)
+password = st.text_input("", key="password_form", label_visibility="collapsed", type="password", placeholder="Enter your password")
+st.image("elements/Remember & Forgot.png", use_column_width=False)
+remember_me = st.checkbox("Remember me", key="remember_me")
+forgot = st.button("Forgot password")
+st.image("elements/Sign in Button.png", use_column_width=False)
+login = st.button("Sign in")
+st.image("elements/Sign in Button Google.png", use_column_width=False)
+sso = st.button("Sign in with SSO")
+st.image("elements/Don’t have an account_ Sign up fo free!.png", use_column_width=False)
+st.markdown('</div>', unsafe_allow_html=True)
 
-    return gdp_df
-
-gdp_df = get_gdp_data()
-
-# -----------------------------------------------------------------------------
-# Draw the actual page
-
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
-
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
-
-# Add some spacing
-''
-''
-
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
-
-from_year, to_year = st.slider(
-    'Which years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
-
-countries = gdp_df['Country Code'].unique()
-
-if not len(countries):
-    st.warning("Select at least one country")
-
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
-
-''
-''
-''
-
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
-)
-
-''
-''
-
-
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
-
-st.header(f'GDP in {to_year}', divider='gray')
-
-''
-
-cols = st.columns(4)
-
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
-
-    with col:
-        first_gdp = first_year[first_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[last_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
-        else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
-
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
-        )
+# Right side (illustration)
+st.markdown('<div class="login-right">', unsafe_allow_html=True)
+st.image("elements/Right Side.png", use_column_width=True)
+st.markdown('</div></div>', unsafe_allow_html=True)

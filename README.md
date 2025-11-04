@@ -12,40 +12,6 @@ A modular, modern Streamlit application for managing ideas and innovations with 
 - **Role-Based Navigation** - Dynamic navigation tabs (Home, Ideas, My Ideas)
 - **User Management** - Quick logout and settings functionality
 
-## 📁 Project Structure
-
-```
-Agile-dashboard/
-├── .streamlit/
-│   └── config.toml
-├── styles/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── login.py
-│   ├── dashboard.py
-│   └── header.py
-├── pages/
-│   ├── __init__.py
-│   ├── login.py
-│   ├── dashboard.py
-│   └── header.py
-├── elements/
-│   ├── upm_logo.png
-│   ├── Right Side.png
-│   ├── Headline.png
-│   ├── Email Form.png
-│   ├── Password Form.png
-│   ├── Sign in Button.png
-│   ├── Sign in Button Google.png
-│   └── SignupforFree.png
-├── data/
-│   └── users.csv
-├── streamlit_app.py
-├── README.md
-└── .gitignore
-```
-
-
 
 ## 🚀 Getting Started
 
@@ -160,3 +126,36 @@ This project is licensed under the MIT License.
 ---
 
 **Built with ❤️ using Streamlit**
+
+## 📁 Project Structure
+
+```
+Agile-dashboard/
+├── .streamlit/
+│   └── config.toml
+├── styles/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── login.py
+│   ├── dashboard.py
+│   └── header.py
+├── pages/
+│   ├── __init__.py
+│   ├── login.py
+│   ├── dashboard.py
+│   └── header.py
+├── elements/
+│   ├── upm_logo.png
+│   ├── Right Side.png
+│   ├── Headline.png
+│   ├── Email Form.png
+│   ├── Password Form.png
+│   ├── Sign in Button.png
+│   ├── Sign in Button Google.png
+│   └── SignupforFree.png
+├── data/
+│   └── users.csv
+├── streamlit_app.py
+├── README.md
+└── .gitignore
+```

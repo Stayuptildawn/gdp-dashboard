@@ -14,28 +14,37 @@ A modular, modern Streamlit application for managing ideas and innovations with 
 
 ## 📁 Project Structure
 
+```
 Agile-dashboard/
 ├── .streamlit/
-│ └── config.toml
+│   └── config.toml
 ├── styles/
-│ ├── init.py
-│ ├── main.py
-│ ├── login.py
-│ ├── dashboard.py
-│ └── header.py
+│   ├── __init__.py
+│   ├── main.py
+│   ├── login.py
+│   ├── dashboard.py
+│   └── header.py
 ├── pages/
-│ ├── init.py
-│ ├── login.py
-│ ├── dashboard.py
-│ └── header.py
+│   ├── __init__.py
+│   ├── login.py
+│   ├── dashboard.py
+│   └── header.py
 ├── elements/
-│ ├── upm_logo.png
-│ ├── Right Side.png
-│ └── ... (other assets)
+│   ├── upm_logo.png
+│   ├── Right Side.png
+│   ├── Headline.png
+│   ├── Email Form.png
+│   ├── Password Form.png
+│   ├── Sign in Button.png
+│   ├── Sign in Button Google.png
+│   └── SignupforFree.png
 ├── data/
-│ └── users.csv
+│   └── users.csv
 ├── streamlit_app.py
-└── README.md
+├── README.md
+└── .gitignore
+```
+```
 
 
 

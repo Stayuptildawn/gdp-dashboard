@@ -39,12 +39,24 @@ def show():
         email = st.text_input("Email", key="email_form", label_visibility="collapsed", placeholder="Enter your email")
         st.markdown('</div>', unsafe_allow_html=True)
         
+        if not email and st.session_state.get('login_warning'):
+            st.markdown(f'<div class="warning-message">{st.session_state.login_warning}</div>', unsafe_allow_html=True)
+        elif st.session_state.get('login_error'):
+            st.markdown(f'<div class="error-message">{st.session_state.login_error}</div>', unsafe_allow_html=True)
+
         # Password input - Use proper label
         st.markdown('<div class="input-group">', unsafe_allow_html=True)
         st.markdown("<label class='input-label'>Password</label>", unsafe_allow_html=True)
         password = st.text_input("Password", key="password_form", label_visibility="collapsed", type="password", placeholder="Enter your password")
         st.markdown('</div>', unsafe_allow_html=True)
         
+        if not password and st.session_state.get('login_warning'):
+            st.markdown(f'<div class="warning-message">{st.session_state.login_warning}</div>', unsafe_allow_html=True)
+            st.session_state.login_warning = '' # Clear after displaying
+        elif st.session_state.get('login_error'):
+            st.markdown(f'<div class="error-message">{st.session_state.login_error}</div>', unsafe_allow_html=True)
+            st.session_state.login_error = ''  # Clear after displaying
+
         # Remember me and Forgot password row
         col_a, col_b = st.columns([1, 1])
         with col_a:
@@ -86,15 +98,25 @@ def show():
             st.image("elements/Right Side.png")
             st.markdown('</div>', unsafe_allow_html=True)
     
+    # Initialize session state for error messages
+    if 'login_error' not in st.session_state:
+        st.session_state.login_error = ''
+    if 'login_warning' not in st.session_state:
+        st.session_state.login_warning = ''
+
     # Login logic
     if login:
+        st.session_state.login_error = ''
+        st.session_state.login_warning = ''
         if email and password:
             user_row = df[(df["username"] == email) & (df["password"] == password)]
             if not user_row.empty:
                 st.session_state.authenticated = True
                 st.session_state.username = email
-                st.rerun()
+                st.session_state.login_error = ''
+                st.session_state.login_warning = ''
             else:
-                st.error("❌ Invalid login credentials. Please try again.")
+                st.session_state.login_error = "Invalid email or password"
         else:
-            st.warning("⚠️ Please enter both email and password.")
+            st.session_state.login_warning = "Fill the compulsory fields!"
+        st.rerun()

@@ -157,5 +157,29 @@ def load_css():
     div[data-testid="column"] {
         padding: 1rem;
     }
+
+    .error-message {
+        background-color: #ef4444;
+        color: white;
+        padding: 0.3rem 1rem;
+        border-radius: 8px;
+        margin-top: -2.0rem;
+        margin-bottom: 1rem;
+        width: fit-content;
+        margin-left: auto;
+        font-size: 0.85rem;
+    }
+
+    .warning-message {
+        background-color: #FFD700;
+        color: black;
+        padding: 0.3rem 1rem;
+        border-radius: 8px;
+        margin-top: -2.0rem;
+        margin-bottom: 1rem;
+        width: fit-content;
+        margin-left: auto;
+        font-size: 0.85rem;
+    }
     </style>
     """, unsafe_allow_html=True)

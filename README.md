@@ -44,7 +44,6 @@ Agile-dashboard/
 ├── README.md
 └── .gitignore
 ```
-```
 
 
 

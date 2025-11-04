@@ -75,11 +75,7 @@ The app will open in your browser at `http://localhost:8501`
 ## 🎨 Customization
 
 ### Colors & Theme
-Edit `.streamlit/config.toml`:
-[theme]
-primaryColor = "#EF4444"
-backgroundColor = "#F8F9FA"
-textColor = "#1a1a1a"
+Edit `.streamlit/config.toml`
 
 
 

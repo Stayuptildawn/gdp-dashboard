@@ -122,14 +122,17 @@ def show():
                             # Create new row with Draft status
                             new_row = {
                                 "id": new_id,
+                                "Status": "Draft",
+                                "From date": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
+                                "To date": "",
+                                "Document name": "",
+                                "Date published": "",
+                                "Issue Number": "",
                                 "Name": (title or "").strip(),
                                 "Category": category,
                                 "Description": (short_desc or "").strip()[:200],
                                 "Detailed Description": (detailed_desc or ""),
                                 "Estimated Impact / Target Audience": (estimated_impact or ""),
-                                "Document name": "",
-                                "Status": "Draft",
-                                "Date": pd.Timestamp.now().strftime("%Y-%m-%d"),
                             }
                             
                             # Add the new row to dataframe
@@ -188,18 +191,20 @@ def show():
                             # Generate a new unique ID
                             new_id = df["id"].max() + 1 if len(df) > 0 else 1
                             
-                            # Create new row with Published status and timestamp
+                            # Create new row - Status "Accepted" means published
                             new_row = {
                                 "id": new_id,
+                                "Status": "Accepted",
+                                "From date": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
+                                "To date": "",
+                                "Document name": "",
+                                "Date published": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
+                                "Issue Number": f"{new_id}.00/000PLN",
                                 "Name": (title or "").strip(),
                                 "Category": category,
                                 "Description": (short_desc or "").strip()[:200],
                                 "Detailed Description": (detailed_desc or ""),
                                 "Estimated Impact / Target Audience": (estimated_impact or ""),
-                                "Document name": "",
-                                "Status": "Published",
-                                "Date": pd.Timestamp.now().strftime("%Y-%m-%d"),
-                                "Published At": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
                             }
                             
                             # Add the new row to dataframe

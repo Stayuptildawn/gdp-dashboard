@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from datetime import date
 from styles import edit_idea as edit_idea
 from data.fake_docs import make_fake_docs
 
@@ -147,6 +148,8 @@ def show():
                                 df.at[i, "Description"] = (short_desc or "").strip()[:200]
                                 df.at[i, "Detailed Description"] = (detailed_desc or "")
                                 df.at[i, "Estimated Impact / Target Audience"] = (estimated_impact or "")
+                                # Update published date to today on edit
+                                df.at[i, "Date published"] = date.today()
                                 # Save back
                                 st.session_state.home_docs = df
                     except Exception as e:

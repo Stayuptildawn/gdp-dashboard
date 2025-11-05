@@ -106,7 +106,13 @@ def show():
     with c2:
         st.subheader("2. Terms & Conditions")
         terms = st.checkbox("I have read and accept the Terms and Conditions.")
-        
+        # Inline terms warning placed right under the checkbox
+        terms_warn = st.empty()
+        if terms:
+            st.session_state.pop("edit_terms_error", None)
+        elif st.session_state.get("edit_terms_error"):
+            terms_warn.markdown('<div class="error-message">Please accept the terms and conditions.</div>', unsafe_allow_html=True)
+
         sc1, sc2 = st.columns(2)
         with sc1:
             if st.button("Save as Draft"):
@@ -147,7 +153,8 @@ def show():
                         st.error(f"Failed to update idea: {e}")
                         st.stop()
 
-                    # Clear validation and navigate back to Home
+                    # Flash success message, clear validation and navigate back to Home
+                    st.session_state["flash_success"] = "Idea updated successfully"
                     st.session_state.edit_validate = False
                     st.query_params["page"] = "Home"
                     try:
@@ -158,7 +165,5 @@ def show():
                     st.rerun()
         st.info("Your idea will be public or visible to others. You can edit it anytime in 'My Ideas'")
 
-    # Render a top-level terms error if flagged (so it persists after rerun)
-    if st.session_state.pop("edit_terms_error", False):
-        st.markdown('<div class="error-message">Please accept the terms and conditions.</div>', unsafe_allow_html=True)
+    # terms warning is rendered inline next to the checkbox above
 

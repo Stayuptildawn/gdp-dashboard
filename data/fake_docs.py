@@ -29,9 +29,9 @@ def make_fake_docs(n: int = 30) -> pd.DataFrame:
             "Issue Number": f"{random.randint(100,999)}.{random.randint(10,99)}/{random.randint(100,999)}PLN",
             "Name": f"Project {i}",
             "Category": random.choice(["TRANSPORT", "HEALTH", "ENERGY", "AI"]),
-            "Description": f"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "Detailed Description": f"Integer rutrum, odio at scelerisque fermentum, purus libero mattis mi, sed tristique mauris sapien eu tortor.",
-            "Estimated Impact / Target Audience": f"Vestibulum non nibh a arcu sodales aliquam nec vel magna."
+            "Description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "Detailed Description": "Integer rutrum, odio at scelerisque fermentum, purus libero mattis mi, sed tristique mauris sapien eu tortor.",
+            "Estimated Impact / Target Audience": "Vestibulum non nibh a arcu sodales aliquam nec vel magna."
         })
     df = pd.DataFrame(rows)
     df.sort_values(["Status", "From date"], ascending=[True, False], inplace=True)

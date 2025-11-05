@@ -29,8 +29,8 @@ def _get_selected_idea():
         "Category of the idea": str(row.get("Category", "")),
         "Short Description": str(row.get("Description", ""))[:200],
         "Detailed Description": str(row.get("Detailed Description", "")),
-    "Estimated Impact / Target Audience": str(row.get("Estimated Impact / Target Audience", "")),
-    "Document name": str(row.get("Document name", "")),
+        "Estimated Impact / Target Audience": str(row.get("Estimated Impact / Target Audience", "")),
+        "Document name": str(row.get("Document name", "")),
         "Visibility Setting": "Public",
     }
 
@@ -51,8 +51,8 @@ def show():
         "Category of the idea": "",
         "Short Description": "",
         "Detailed Description": "",
-    "Estimated Impact / Target Audience": "",
-    "Document name": "",
+        "Estimated Impact / Target Audience": "",
+        "Document name": "",
         "Visibility Setting": "Public",
     }
     data = {**defaults, **(idea or {})}
@@ -105,7 +105,7 @@ def show():
 
     with c2:
         st.subheader("2. Terms & Conditions")
-        terms = st.checkbox("I have read and accept the Term and Conditions.")
+        terms = st.checkbox("I have read and accept the Terms and Conditions.")
         
         sc1, sc2 = st.columns(2)
         with sc1:

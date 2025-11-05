@@ -150,6 +150,7 @@ def show():
                                 df.at[i, "Estimated Impact / Target Audience"] = (estimated_impact or "")
                                 # Update published date to today on edit
                                 df.at[i, "Date published"] = date.today()
+                                df.at[i, "Status"] = "On Review"
                                 # Save back
                                 st.session_state.home_docs = df
                     except Exception as e:

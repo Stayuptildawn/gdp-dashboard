@@ -120,12 +120,17 @@ def show():
                             new_id = df["id"].max() + 1 if len(df) > 0 else 1
                             
                             # Create new row with Draft status
+                            # Generate random to date (1-6 months from now)
+                            import random
+                            days_to_add = random.randint(30, 180)
+                            to_date = (pd.Timestamp.now() + pd.Timedelta(days=days_to_add)).strftime("%d/%m/%Y %H:%M")
+                            
                             new_row = {
                                 "id": new_id,
                                 "Status": "Draft",
                                 "From date": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
-                                "To date": "",
-                                "Document name": "",
+                                "To date": to_date,
+                                "Document name": f"DRAFT/{new_id}/{category[:3].upper()}",
                                 "Date published": "",
                                 "Issue Number": "",
                                 "Name": (title or "").strip(),
@@ -192,14 +197,19 @@ def show():
                             new_id = df["id"].max() + 1 if len(df) > 0 else 1
                             
                             # Create new row - Status "Accepted" means published
+                            # Generate random to date (1-6 months from now)
+                            import random
+                            days_to_add = random.randint(30, 180)
+                            to_date = (pd.Timestamp.now() + pd.Timedelta(days=days_to_add)).strftime("%d/%m/%Y %H:%M")
+                            
                             new_row = {
                                 "id": new_id,
                                 "Status": "Accepted",
                                 "From date": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
-                                "To date": "",
-                                "Document name": "",
+                                "To date": to_date,
+                                "Document name": f"PROFORMA/{new_id}/{category[:3].upper()}",
                                 "Date published": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
-                                "Issue Number": f"{new_id}.00/000PLN",
+                                "Issue Number": f"{new_id}.00/{random.randint(100,999)}PLN",
                                 "Name": (title or "").strip(),
                                 "Category": category,
                                 "Description": (short_desc or "").strip()[:200],

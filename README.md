@@ -17,7 +17,7 @@ A modular, modern Streamlit application for managing ideas and innovations with 
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.8 or higher (3.11)
 - pip (Python package manager)
 
 ### Installation
@@ -35,7 +35,7 @@ source venv/bin/activate # On Windows: venv\Scripts\activate
 
 
 3. **Install dependencies:**
-pip install streamlit pandas
+pip install streamlit pandas streamlit-aggrid
 
 
 

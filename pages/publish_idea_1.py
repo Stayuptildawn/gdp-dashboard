@@ -140,3 +140,8 @@ def show():
     # Render a top-level terms error if flagged (so it persists after rerun)
     if st.session_state.pop("publish_terms_error", False):
         st.markdown('<div class="error-message">Please accept the terms and conditions.</div>', unsafe_allow_html=True)
+
+
+# Call the show function when the page loads
+if __name__ == "__main__":
+    show()

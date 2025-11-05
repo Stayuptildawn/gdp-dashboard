@@ -1,28 +1,58 @@
 import streamlit as st
 from styles import dashboard as dashboard_styles
 from pages.header import show_header
+from pages import home as home_page
+
+def _qp_get(name, default=None):
+    v = st.query_params.get(name, default)
+    # Normalize list -> first element
+    if isinstance(v, (list, tuple)):
+        return v[0] if v else default
+    return v
 
 def show():
     """Display the dashboard page with header and content"""
     
+    st.set_page_config(layout="wide")
     # Load dashboard-specific CSS
     dashboard_styles.load_css()
    
     # Render header and get active tab from URL
-    active = show_header()
+    show_header()
+
+    # --- read and normalize QPs
+    active_qp = _qp_get("page")
+    active_ss = st.session_state.get("active_tab")
+    active = active_qp or active_ss or "Home"
+
+    edit_id_qp = _qp_get("edit_id")
+    if edit_id_qp is not None:
+        try:
+            st.session_state["edit_id"] = int(edit_id_qp)
+        except Exception:
+            st.session_state["edit_id"] = str(edit_id_qp)
+
 
     # Save active tab to session state
     st.session_state["active_tab"] = active
+   
 
     # ===== Content based on active tab =====
     st.markdown('<div class="dashboard-content">', unsafe_allow_html=True)
     
     if active == "Home":
-        st.write("🏠 Home content here.")
+        home_page.show()
     elif active == "My Ideas":
-        st.write("💡 This is the My Ideas section.")
+         if "edit_id" in st.session_state:
+            st.write(f"✏️ Editing idea ID: {st.session_state['edit_id']}")
+            #TODO: EDIT PAGE
+         else:
+            st.write("🧠 My Ideas page.")
     elif active == "Ideas":
-        st.write("🧠 Ideas page.")
+          if "edit_id" in st.session_state:
+            st.write(f"✏️ Editing idea ID: {st.session_state['edit_id']}")
+          else:
+            st.write("🧠 Ideas page.")
     else:
         st.write("🏠 Home content here.")
     

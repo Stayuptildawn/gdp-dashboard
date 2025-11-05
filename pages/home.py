@@ -32,6 +32,10 @@ def show():
         df[c] = pd.to_datetime(df[c])  # ensure dtype
 
     st.subheader("Documents")
+    # Flash success message from edit_idea submit
+    flash_msg = st.session_state.pop("flash_success", None)
+    if flash_msg:
+        st.success(flash_msg)
 
     # -------- Filters
     c1, c2, c3, c4 = st.columns([1,1,1,2])
@@ -56,13 +60,21 @@ def show():
         )
     df = df[m].reset_index(drop=True)
 
+    # Columns to hide from the Home table (long text fields used only in edit view)
+    hidden_cols = [
+        "Description",
+        "Detailed Description",
+        "Estimated Impact / Target Audience",
+    ]
+    display_df = df.drop(columns=[c for c in hidden_cols if c in df.columns])
+
     # -------- Copy to display: format dates as strings for the grid
-    grid_df = df.copy()
+    grid_df = display_df.copy()
     for c in ["From date", "To date", "Date published"]:
         grid_df[c] = grid_df[c].dt.strftime("%Y-%m-%d")   # or "%d/%m/%Y"
 
     # ---- AgGrid config
-    gb = GridOptionsBuilder.from_dataframe(df)
+    gb = GridOptionsBuilder.from_dataframe(display_df)
 
   
     # Status value
@@ -91,7 +103,7 @@ def show():
     grid_opts["quickFilterText"] = q or ""
 
     resp = AgGrid(
-        df,
+        display_df,
         gridOptions=grid_opts,
         update_mode=GridUpdateMode.SELECTION_CHANGED,
         allow_unsafe_jscode=True,

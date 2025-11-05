@@ -2,6 +2,7 @@ import streamlit as st
 from styles import dashboard as dashboard_styles
 from pages.header import show_header
 from pages import home as home_page
+from pages import edit_idea as edit_idea_page
 
 def _qp_get(name, default=None):
     v = st.query_params.get(name, default)
@@ -43,10 +44,11 @@ def show():
     if active == "Home":
         home_page.show()
     elif active == "My Ideas":
-         if "edit_id" in st.session_state:
-            st.write(f"✏️ Editing idea ID: {st.session_state['edit_id']}")
+        
+        if "edit_id" in st.session_state:
+            edit_idea_page.show()
             #TODO: EDIT PAGE
-         else:
+        else:
             st.write("🧠 My Ideas page.")
     elif active == "Ideas":
           if "edit_id" in st.session_state:

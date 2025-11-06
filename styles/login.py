@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 def load_css():
     """Load CSS specific to the login page"""
     st.markdown("""
@@ -67,7 +68,7 @@ def load_css():
         display: none;
     }
     
-    /* Forgot password link - smaller and inline */
+    /* Forgot password link */
     .forgot-link button {
         background: transparent !important;
         border: none !important;
@@ -85,12 +86,12 @@ def load_css():
         text-decoration: underline !important;
     }
     
-    /* Button group spacing - reduced */
+    /* Button group spacing */
     .button-group {
         margin: 0.75rem 0;
     }
     
-    /* Primary button (Sign in) - match reference width */
+    /* Primary button (Sign in) */
     .stButton > button[kind="primary"] {
         background-color: #ef4444 !important;
         color: white !important;
@@ -109,7 +110,7 @@ def load_css():
         box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3) !important;
     }
     
-    /* Secondary button (SSO) - match reference width */
+    /* Secondary button (SSO) */
     .stButton > button:not([kind="primary"]) {
         background-color: #ffffff !important;
         color: #374151 !important;
@@ -158,6 +159,7 @@ def load_css():
         padding: 1rem;
     }
 
+    /* Error message styling */
     .error-message {
         background-color: #ef4444;
         color: white;
@@ -170,6 +172,7 @@ def load_css():
         font-size: 0.85rem;
     }
 
+    /* Warning message styling */
     .warning-message {
         background-color: #FFD700;
         color: black;
@@ -181,5 +184,69 @@ def load_css():
         margin-left: auto;
         font-size: 0.85rem;
     }
+    
+    /* ==================== MODAL POPUP STYLES ==================== */
+    
+    /* Modal overlay - clickable dark background */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        animation: fadeIn 0.3s ease;
+        cursor: pointer;
+    }
+    
+    /* Fade in animation */
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+        }
+        to { 
+            opacity: 1; 
+        }
+    }
+    
+    /* Modal content box - not clickable */
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 0;
+        max-width: 90%;
+        max-height: 80vh;
+        overflow: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+        position: relative;
+        cursor: default;
+    }
+    
+    /* Slide up animation */
+    @keyframes slideUp {
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Modal image styling */
+    .modal-content img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+    }
+    
+    /* ==================== END MODAL STYLES ==================== */
     </style>
     """, unsafe_allow_html=True)

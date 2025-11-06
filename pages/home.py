@@ -1,8 +1,7 @@
 # pages/home.py
 import streamlit as st
 import pandas as pd
-from datetime import date
-from data.fake_docs import make_fake_docs, STATUSES
+from data.fake_docs import STATUSES
 
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
@@ -21,7 +20,8 @@ def get_selected_id(sel):
 
 def _init_state():
     if "home_docs" not in st.session_state:
-        st.session_state.home_docs = make_fake_docs(35)
+        st.error("No hay datos en sesión. Vuelve al inicio.")
+        st.stop()
 
 def show():
     _init_state()

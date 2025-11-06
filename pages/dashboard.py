@@ -1,7 +1,8 @@
 import streamlit as st
+from data.fake_docs import make_fake_docs
 from styles import dashboard as dashboard_styles
 from pages.header import show_header
-from pages import home as home_page
+from pages import home as home_page, publish_idea
 from pages import edit_idea as edit_idea_page
 
 def _qp_get(name, default=None):
@@ -11,15 +12,21 @@ def _qp_get(name, default=None):
         return v[0] if v else default
     return v
 
+def _init_docs_once():
+    if "home_docs" not in st.session_state:
+        st.session_state.home_docs = make_fake_docs(35)
+
 def show():
     """Display the dashboard page with header and content"""
     
     st.set_page_config(layout="wide")
+    _init_docs_once()
+
     # Load dashboard-specific CSS
     dashboard_styles.load_css()
    
     # Render header and get active tab from URL
-    show_header()
+    active = show_header()
 
     # --- read and normalize QPs
     active_qp = _qp_get("page")
@@ -47,14 +54,10 @@ def show():
         
         if "edit_id" in st.session_state:
             edit_idea_page.show()
-            #TODO: EDIT PAGE
         else:
             st.write("🧠 My Ideas page.")
     elif active == "Ideas":
-          if "edit_id" in st.session_state:
-            st.write(f"✏️ Editing idea ID: {st.session_state['edit_id']}")
-          else:
-            st.write("🧠 Ideas page.")
+            publish_idea.show()
     else:
         st.write("🏠 Home content here.")
     

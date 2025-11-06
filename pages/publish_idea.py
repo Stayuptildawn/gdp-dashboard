@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import time
 from styles import edit_idea as edit_idea
-from data.fake_docs import make_fake_docs
+from datetime import date
 
 
 def show():
@@ -18,9 +18,10 @@ def show():
     if "is_publishing" not in st.session_state:
         st.session_state.is_publishing = False
 
-    # Ensure the documents table exists
+    # # # Ensure the documents table exists
     if "home_docs" not in st.session_state:
-        st.session_state.home_docs = make_fake_docs(30)
+        st.error("Error table is not defined")
+        st.stop()
 
     # Initialize form data in session state for field persistence on validation failure
     if "publish_form_data" not in st.session_state:
@@ -127,12 +128,12 @@ def show():
                             
                             new_row = {
                                 "id": new_id,
-                                "Status": "Draft",
+                                "Status": "On Review",
                                 "From date": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
                                 "To date": to_date,
                                 "Document name": f"DRAFT/{new_id}/{category[:3].upper()}",
-                                "Date published": "",
-                                "Issue Number": "",
+                                "Date published": date.today(),
+                                "Issue Number":  f"{new_id}.00/{random.randint(100,999)}PLN",
                                 "Name": (title or "").strip(),
                                 "Category": category,
                                 "Description": (short_desc or "").strip()[:200],
@@ -208,7 +209,7 @@ def show():
                                 "From date": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
                                 "To date": to_date,
                                 "Document name": f"PROFORMA/{new_id}/{category[:3].upper()}",
-                                "Date published": pd.Timestamp.now().strftime("%d/%m/%Y %H:%M"),
+                                "Date published":  date.today(),
                                 "Issue Number": f"{new_id}.00/{random.randint(100,999)}PLN",
                                 "Name": (title or "").strip(),
                                 "Category": category,

@@ -2,15 +2,49 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 from styles import edit_idea as edit_idea
-from data.fake_docs import make_fake_docs
+
+# --- helpers ---
+def _persist_changes(form, status="On Review", set_date=True):
+    """Guarda cambios en el DF y navega a Home."""
+    try:
+        df = st.session_state.get("home_docs")
+        edit_id = st.session_state.get("edit_id")
+        if df is not None and edit_id is not None and "id" in df.columns:
+            idx = df.index[df["id"] == edit_id]
+            if len(idx) > 0:
+                i = idx[0]
+                df.at[i, "Name"] = (form["title"] or "").strip()
+                df.at[i, "Category"] = form["category"]
+                df.at[i, "Description"] = (form["short_desc"] or "").strip()[:200]
+                df.at[i, "Detailed Description"] = (form["detailed_desc"] or "")
+                df.at[i, "Estimated Impact / Target Audience"] = (form["estimated_impact"] or "")
+                if set_date:
+                    df.at[i, "Date published"] = date.today()
+                df.at[i, "Status"] = status
+                st.session_state.home_docs = df
+    except Exception as e:
+        st.error(f"Failed to update idea: {e}")
+        st.stop()
+
+    st.session_state["flash_success"] = "Changes saved"
+    st.session_state.edit_validate = False
+    st.query_params["page"] = "Home"
+    try:
+        del st.query_params["edit_id"]
+    except Exception:
+        pass
+    st.session_state.pop("edit_id", None)
+    st.rerun()
 
 def _get_selected_idea():
     """Return a dict with fields mapped for the edit form from the selected idea.
     Falls back to empty defaults when not available.
     """
-    # Ensure the documents table exists (fallback if user navigates directly)
+    # # Ensure the documents table exists (fallback if user navigates directly)
     if "home_docs" not in st.session_state:
-        st.session_state.home_docs = make_fake_docs(30)
+        st.error("Error on creating the list of ideas")
+        return None
+
 
     df = st.session_state.home_docs
     edit_id = st.session_state.get("edit_id")
@@ -115,9 +149,18 @@ def show():
             terms_warn.markdown('<div class="error-message">Please accept the terms and conditions.</div>', unsafe_allow_html=True)
 
         sc1, sc2 = st.columns(2)
+        form = {
+                    "title": title,
+                    "category": category,
+                    "short_desc": short_desc,
+                    "detailed_desc": detailed_desc,
+                    "estimated_impact": estimated_impact,
+                    "visibility": visibility,
+                }
         with sc1:
             if st.button("Save as Draft"):
                 st.success("Idea saved as draft!")
+                _persist_changes(form, status="On Review", set_date=True)
         with sc2:
             if st.button("Submit", type="primary"):
                 # Trigger validation for empty required fields
@@ -136,37 +179,7 @@ def show():
                     st.rerun()
                 else:
                     # Persist updates back to the table
-                    try:
-                        df = st.session_state.get("home_docs")
-                        edit_id = st.session_state.get("edit_id")
-                        if df is not None and edit_id is not None and "id" in df.columns:
-                            idx = df.index[df["id"] == edit_id]
-                            if len(idx) > 0:
-                                i = idx[0]
-                                df.at[i, "Name"] = (title or "").strip()
-                                df.at[i, "Category"] = category
-                                df.at[i, "Description"] = (short_desc or "").strip()[:200]
-                                df.at[i, "Detailed Description"] = (detailed_desc or "")
-                                df.at[i, "Estimated Impact / Target Audience"] = (estimated_impact or "")
-                                # Update published date to today on edit
-                                df.at[i, "Date published"] = date.today()
-                                df.at[i, "Status"] = "On Review"
-                                # Save back
-                                st.session_state.home_docs = df
-                    except Exception as e:
-                        st.error(f"Failed to update idea: {e}")
-                        st.stop()
-
-                    # Flash success message, clear validation and navigate back to Home
-                    st.session_state["flash_success"] = "Idea updated successfully"
-                    st.session_state.edit_validate = False
-                    st.query_params["page"] = "Home"
-                    try:
-                        del st.query_params["edit_id"]
-                    except Exception:
-                        pass
-                    st.session_state.pop("edit_id", None)
-                    st.rerun()
+                    _persist_changes(form, status="Accepted", set_date=True)
         st.info("Your idea will be public or visible to others. You can edit it anytime in 'My Ideas'")
 
     # terms warning is rendered inline next to the checkbox above

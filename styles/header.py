@@ -1,14 +1,15 @@
 import streamlit as st
 
+
 def load_css():
-    """Load CSS specific to the header and navbar"""
+    """Loads the CSS for the header and navigation bar"""
     st.markdown("""
     <style>
       :root { 
         --blue: #1677ff; 
       }
       
-      /* ===== Header Section (white background) ===== */
+      /* ===== Top header stuff (white box at the top) ===== */
       .app-header {
         background: #ffffff;
         border: 1px solid #e5e7eb;
@@ -20,14 +21,14 @@ def load_css():
         box-shadow: 0 4px 10px rgba(0,0,0,.05);
       }
       
-      /* Logo styling */
+      /* Make the logo look nice */
       .logo-img { 
         height: 48px; 
         width: auto; 
         border-radius: 8px; 
       }
       
-      /* Title section */
+      /* App title and subtitle */
       .title h1 { 
         margin: 0; 
         font-size: 22px; 
@@ -41,7 +42,8 @@ def load_css():
         color: #475569; 
       }
 
-      /* ===== Navbar Section (blue background) ===== */
+
+      /* ===== Navigation bar (blue strip below header) ===== */
       .navbar {
         background: var(--blue);
         border-radius: 12px;
@@ -52,7 +54,7 @@ def load_css():
         margin: 8px 0 14px 0;
       }
       
-      /* Navbar links and separators */
+      /* Style for the nav links and those little separators */
       .navbar a.navlink, .navbar span.sep {
         color: #fff;
         text-decoration: none;
@@ -72,18 +74,20 @@ def load_css():
         text-decoration: underline; 
       }
 
-      /* Active link styling (black pill) */
+
+      /* Dark pill around the current active page */
       .navbar a.navlink.active {
         background: rgba(0,0,0,.85);
         box-shadow: 0 2px 6px rgba(0,0,0,.12);
       }
+
 
       .navbar .sep { 
         opacity: .8; 
         margin: 0 10px; 
       }
       
-      /* ===== User section buttons ===== */
+      /* ===== User info and buttons on the right ===== */
       .user-section {
         display: grid; 
         grid-template-columns: auto auto; 
@@ -105,7 +109,7 @@ def load_css():
         font-size: 14px;
       }
       
-      /* Logout button */
+      /* Black logout button */
       .logout-btn {
         background: #111;
         color: white;
@@ -117,7 +121,7 @@ def load_css():
         margin-top: 4px;
       }
       
-      /* Settings button */
+      /* Gray settings button */
       .settings-btn {
         background: #848484;
         color: white;

@@ -1,7 +1,8 @@
 import streamlit as st
 
+
 def load_css():
-    """Load global base CSS styles for the entire app"""
+    """Loads the base CSS that applies to the whole app"""
     st.markdown("""
     <style>
       :root {
@@ -12,19 +13,19 @@ def load_css():
         --muted: #64748b;
       }
       
-      /* Global background and text colors */
+      /* Set up background and text colors everywhere */
       html, body { 
         background: var(--bg) !important; 
         color: var(--text); 
       }
       
-      /* Remove default Streamlit padding */
+      /* Streamlit adds padding by default - we don't want that */
       div.block-container { 
         padding-top: 0rem !important; 
         background: var(--bg) !important; 
       }
       
-      /* Hide default Streamlit header */
+      /* Get rid of Streamlit's default header */
       header[data-testid="stHeader"] { 
         background: none !important; 
         height: 0px; 
@@ -34,7 +35,7 @@ def load_css():
         padding-top: 0rem !important; 
       }
       
-      /* Global button styles */
+      /* Make all buttons look consistent */
       .stButton > button { 
         border-radius: 12px; 
         font-weight: 600; 

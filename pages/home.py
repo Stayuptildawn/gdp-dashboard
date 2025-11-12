@@ -1,16 +1,17 @@
 # pages/home.py
 import streamlit as st
 import pandas as pd
-from datetime import date
-from data.fake_docs import make_fake_docs, STATUSES
+from data.fake_docs import STATUSES
+
 
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
+
 def get_selected_id(sel):
-    # Caso 1: lista de dicts (comportamiento típico de st_aggrid)
+    # Case 1: list of dicts (this is what st_aggrid usually gives us)
     if isinstance(sel, list):
         return sel[0]["id"] if len(sel) > 0 else None
-    # Caso 2: DataFrame de pandas
+    # Case 2: pandas DataFrame (sometimes it comes back as this)
     try:
         import pandas as pd
         if isinstance(sel, pd.DataFrame):
@@ -19,25 +20,31 @@ def get_selected_id(sel):
         pass
     return None
 
+
 def _init_state():
     if "home_docs" not in st.session_state:
-        st.session_state.home_docs = make_fake_docs(35)
+        st.error("Looks like the data didn't load properly. Try refreshing the page or head back to the main menu.")
+        st.stop()
+
 
 def show():
     _init_state()
 
-    # --- base df with real datetime for filtering
+
+    # Get a copy of the data and make sure dates are actual datetime objects for filtering
     df = st.session_state.home_docs.copy()
     for c in ["From date", "To date", "Date published"]:
-        df[c] = pd.to_datetime(df[c])  # ensure dtype
+        df[c] = pd.to_datetime(df[c])  # convert to datetime
+
 
     st.subheader("Documents")
-    # Flash success message from edit_idea submit
+    # Show success message if someone just submitted an edit
     flash_msg = st.session_state.pop("flash_success", None)
     if flash_msg:
         st.success(flash_msg)
 
-    # -------- Filters
+
+    # Filter controls at the top
     c1, c2, c3, c4 = st.columns([1,1,1,2])
     with c1:
         status = st.multiselect("Status", STATUSES, default=["Accepted"])
@@ -47,6 +54,7 @@ def show():
         td = st.date_input("To date", value=None)
     with c4:
         q = st.text_input("Search (name / doc / issue)")
+
 
     m = df["Status"].isin(status)
     if fd: m &= df["From date"] >= pd.to_datetime(fd)
@@ -60,7 +68,8 @@ def show():
         )
     df = df[m].reset_index(drop=True)
 
-    # Columns to hide from the Home table (long text fields used only in edit view)
+
+    # Hide the long text fields from the table - we only need those in the edit view
     hidden_cols = [
         "Description",
         "Detailed Description",
@@ -68,16 +77,19 @@ def show():
     ]
     display_df = df.drop(columns=[c for c in hidden_cols if c in df.columns])
 
-    # -------- Copy to display: format dates as strings for the grid
+
+    # Format dates as strings so they display nicely in the grid
     grid_df = display_df.copy()
     for c in ["From date", "To date", "Date published"]:
         grid_df[c] = grid_df[c].dt.strftime("%Y-%m-%d")   # or "%d/%m/%Y"
 
-    # ---- AgGrid config
+
+    # Set up the AgGrid table
     gb = GridOptionsBuilder.from_dataframe(display_df)
 
+
   
-    # Status value
+    # Style the Status column with colored badges
     cell_style = JsCode("""
     function(params){
     const v = params.value;
@@ -90,9 +102,10 @@ def show():
     """)
     gb.configure_column("Status", cellStyle=cell_style, width=140)
     gb.configure_selection(
-        selection_mode='single',   # one single line
-        use_checkbox=True          # checkboxes
+        selection_mode='single',   # only let them select one row at a time
+        use_checkbox=True          # show checkboxes for selection
     )
+
 
     grid_opts = gb.build()
     grid_opts["domLayout"] = "normal"
@@ -101,6 +114,7 @@ def show():
     grid_opts["suppressRowClickSelection"] = True
     grid_opts["rowSelection"] = "single"
     grid_opts["quickFilterText"] = q or ""
+
 
     resp = AgGrid(
         display_df,
@@ -111,14 +125,15 @@ def show():
         height=520,
         theme="balham"
     )
-    # ---- Accion bar out of the iframe
+    # Action buttons below the table
     sel = resp.get("selected_rows", [])
     selected_id = get_selected_id(sel)
+
 
     c1, c2, c3 = st.columns([1,1,1])
     with c1:
         st.button("🔎 Open", disabled=selected_id is None,
-                on_click=lambda: (_ for _ in ()).throw(SystemExit))  # placeholder 
+                on_click=lambda: (_ for _ in ()).throw(SystemExit))  # TODO: implement this 
     with c2:
         if st.button("✏️ Edit selected", disabled=selected_id is None):
             st.query_params["page"] = "My Ideas"
@@ -129,5 +144,3 @@ def show():
             st.query_params["page"] = "Home"
             st.query_params["delete_id"] = str(selected_id)
             st.rerun()
-
-  

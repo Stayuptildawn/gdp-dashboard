@@ -4,24 +4,31 @@ import random
 import pandas as pd
 from datetime import date, timedelta
 
+
 STATUSES = ["On Review", "Accepted", "Rejected"]
 
+
 def _rand_date(start: date, end: date) -> date:
+    """Pick a random date between start and end"""
     delta = (end - start).days
     return start + timedelta(days=random.randint(0, delta))
 
+
 def make_fake_docs(n: int = 30) -> pd.DataFrame:
+    """Generate some fake document data for testing/demo purposes"""
     today = date.today()
     start = today - timedelta(days=120)
 
+
     rows = []
     for i in range(1, n + 1):
+        # Create random dates that make sense (from -> to -> published)
         fd = _rand_date(start, today - timedelta(days=1))
         td = _rand_date(fd, fd + timedelta(days=14))
         pub = _rand_date(fd, td)
         rows.append({
             "id": 1600 + i,
-            "Status": random.choices(STATUSES, weights=[0.5, 0.35, 0.15])[0],
+            "Status": random.choices(STATUSES, weights=[0.5, 0.35, 0.15])[0],  # Bias toward "On Review"
             "From date": fd,
             "To date": td,
             "Document name": f"PROFORMA/{pub.strftime('%d/%m/%Y')}",
@@ -34,6 +41,7 @@ def make_fake_docs(n: int = 30) -> pd.DataFrame:
             "Estimated Impact / Target Audience": "Vestibulum non nibh a arcu sodales aliquam nec vel magna."
         })
     df = pd.DataFrame(rows)
+    # Sort so "Accepted" and "On Review" show up first, newest dates on top
     df.sort_values(["Status", "From date"], ascending=[True, False], inplace=True)
     df.reset_index(drop=True, inplace=True)
     return df

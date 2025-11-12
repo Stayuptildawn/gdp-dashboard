@@ -1,14 +1,16 @@
 import streamlit as st
 
+
 def load_css():
     st.markdown("""
     <style>
         /*
-         Make borders always visible with rounded corners by styling the WRAPPERS,
-         not just the input elements (Streamlit wraps inputs in extra divs).
+         Streamlit wraps inputs in extra divs, so we need to style those wrappers
+         to get clean borders with rounded corners that actually show up.
         */
 
-        /* Text input wrapper */
+
+        /* Text input box borders */
         div[data-testid="stTextInput"] > div > div {
             border: 1px solid #000 !important;
             border-radius: 8px !important;
@@ -16,14 +18,15 @@ def load_css():
             background: #fff !important;
             overflow: hidden;
         }
-        /* Remove native borders so wrapper border is visible */
+        /* Get rid of the default input border so our wrapper border shows */
         div[data-testid="stTextInput"] input {
             border: none !important;
             box-shadow: none !important;
             background: transparent !important;
         }
 
-        /* Text area wrapper */
+
+        /* Same thing for text areas */
         div[data-testid="stTextArea"] > div > div {
             border: 1px solid #000 !important;
             border-radius: 8px !important;
@@ -37,21 +40,23 @@ def load_css():
             background: transparent !important;
         }
 
-        /* Keep border black on focus */
+
+        /* Don't let the border change color when someone clicks into the field */
         div[data-testid="stTextInput"] > div > div:focus-within,
         div[data-testid="stTextArea"] > div > div:focus-within {
             border: 1px solid #000 !important;
             box-shadow: none !important;
         }
 
-        /* Selectbox (baseweb) wrapper */
+
+        /* Dropdown/select boxes (these use baseweb under the hood) */
         div[data-baseweb="select"] > div {
             border: 1px solid #000 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
             background: #fff !important;
         }
-        /* Prevent red focus/outline on the combobox */
+        /* Stop that annoying red outline from appearing when focused */
         div[data-baseweb="select"] div[role="combobox"] {
             outline: none !important;
         }
@@ -60,7 +65,8 @@ def load_css():
             box-shadow: none !important;
         }
 
-        /* Inline messages (match login styling exactly) */
+
+        /* Red error messages - styled the same as on login page */
         .error-message {
             background-color: #ef4444;
             color: white;
@@ -72,6 +78,7 @@ def load_css():
             margin-left: auto;
             font-size: 0.85rem;
         }
+
 
         .warning-message {
             background-color: #FFD700;

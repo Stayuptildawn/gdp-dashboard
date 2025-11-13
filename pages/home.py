@@ -39,8 +39,7 @@ def show():
     df = st.session_state.home_docs.copy()
     for c in ["From date", "To date", "Date published"]:
         df[c] = pd.to_datetime(df[c])  # ensure dtype
-
-    st.subheader("Documents")
+        
     # Flash success message from edit_idea submit
     flash_msg = st.session_state.pop("flash_success", None)
     if flash_msg:

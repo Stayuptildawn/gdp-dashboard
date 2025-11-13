@@ -52,7 +52,7 @@ def show():
     # Make search, from, and to date boxes less wide
     filter_cols = st.columns([1.2,0.4,0.4,0.4,0.2])
     with filter_cols[0]:
-        q = st.text_input("Search (name / doc / issue)")
+        q = st.text_input("Search (name / description)")
     with filter_cols[1]:
         fd = st.date_input("From date", value=None)
     with filter_cols[2]:
@@ -61,14 +61,6 @@ def show():
         # Category dropdown
         cat_options = sorted(df["Category"].dropna().unique()) if "Category" in df.columns else []
         category = st.selectbox("Category", options=["All"] + cat_options, index=0)
-    with filter_cols[4]:
-        st.markdown("""
-            <div class='filter-btn-wrap'>
-                <button class='filter-btn'>
-                    <span style='font-size: 18px; margin-right: 6px;'>🔎</span> Filter
-                </button>
-            </div>
-        """, unsafe_allow_html=True)
 
     m = pd.Series([True] * len(df))
     if fd: m &= df["From date"] >= pd.to_datetime(fd)
@@ -78,9 +70,8 @@ def show():
     if q:
         ql = q.lower()
         m &= (
-            df["Document name"].str.lower().str.contains(ql) |
             df["Name"].str.lower().str.contains(ql) |
-            df["Issue Number"].str.lower().str.contains(ql)
+            df["Description"].str.lower().str.contains(ql)
         )
     df = df[m].reset_index(drop=True)
 

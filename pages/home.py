@@ -3,15 +3,13 @@ import streamlit as st
 import pandas as pd
 from data.fake_docs import STATUSES
 
-
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
-
 def get_selected_id(sel):
-    # Case 1: list of dicts (this is what st_aggrid usually gives us)
+    # Caso 1: lista de dicts (comportamiento típico de st_aggrid)
     if isinstance(sel, list):
         return sel[0]["id"] if len(sel) > 0 else None
-    # Case 2: pandas DataFrame (sometimes it comes back as this)
+    # Caso 2: DataFrame de pandas
     try:
         import pandas as pd
         if isinstance(sel, pd.DataFrame):
@@ -20,31 +18,31 @@ def get_selected_id(sel):
         pass
     return None
 
-
 def _init_state():
     if "home_docs" not in st.session_state:
-        st.error("Looks like the data didn't load properly. Try refreshing the page or head back to the main menu.")
+        st.error("No hay datos en sesión. Vuelve al inicio.")
         st.stop()
-
+    # Initialize sort states: None, 'asc', 'desc'
+    if "title_sort" not in st.session_state:
+        st.session_state.title_sort = None
+    if "date_sort" not in st.session_state:
+        st.session_state.date_sort = None
 
 def show():
     _init_state()
 
-
-    # Get a copy of the data and make sure dates are actual datetime objects for filtering
+    # --- base df with real datetime for filtering
     df = st.session_state.home_docs.copy()
     for c in ["From date", "To date", "Date published"]:
-        df[c] = pd.to_datetime(df[c])  # convert to datetime
-
+        df[c] = pd.to_datetime(df[c])  # ensure dtype
 
     st.subheader("Documents")
-    # Show success message if someone just submitted an edit
+    # Flash success message from edit_idea submit
     flash_msg = st.session_state.pop("flash_success", None)
     if flash_msg:
         st.success(flash_msg)
 
-
-    # Filter controls at the top
+    # -------- Filters
     c1, c2, c3, c4 = st.columns([1,1,1,2])
     with c1:
         status = st.multiselect("Status", STATUSES, default=["Accepted"])
@@ -54,7 +52,6 @@ def show():
         td = st.date_input("To date", value=None)
     with c4:
         q = st.text_input("Search (name / doc / issue)")
-
 
     m = df["Status"].isin(status)
     if fd: m &= df["From date"] >= pd.to_datetime(fd)
@@ -69,27 +66,42 @@ def show():
     df = df[m].reset_index(drop=True)
 
 
-    # Hide the long text fields from the table - we only need those in the edit view
-    hidden_cols = [
-        "Description",
-        "Detailed Description",
-        "Estimated Impact / Target Audience",
-    ]
-    display_df = df.drop(columns=[c for c in hidden_cols if c in df.columns])
+    # Only show: Title (from Name), Date published, Short Description (from Description), Category
+    display_df = pd.DataFrame()
+    if "Name" in df.columns:
+        display_df["Title"] = df["Name"]
+    if "Date published" in df.columns:
+        display_df["Date published"] = df["Date published"].dt.strftime("%Y-%m-%d")
+    if "Description" in df.columns:
+        display_df["Short Description"] = df["Description"]
+    if "Category" in df.columns:
+        display_df["Category"] = df["Category"]
 
-
-    # Format dates as strings so they display nicely in the grid
-    grid_df = display_df.copy()
-    for c in ["From date", "To date", "Date published"]:
-        grid_df[c] = grid_df[c].dt.strftime("%Y-%m-%d")   # or "%d/%m/%Y"
-
-
-    # Set up the AgGrid table
+    # ---- AgGrid config
     gb = GridOptionsBuilder.from_dataframe(display_df)
+    # Make Short Description column much wider
+    if "Short Description" in display_df.columns:
+        gb.configure_column("Short Description", width=1000)
 
 
-  
-    # Style the Status column with colored badges
+
+    # Enable AgGrid sort/filter icons for Title and Date published, but override their sort/filter events
+    # so that clicking the icon cycles through the three states only (A→Z, Z→A, none for Title; Earliest→Latest, Latest→Earliest, none for Date published)
+    # This is achieved by using AgGrid's onSortChanged event and a Streamlit callback
+    if "Title" in display_df.columns:
+        gb.configure_column(
+            field = "Title",
+            sortable=True,
+            suppressMenu=True
+        )
+    if "Date published" in display_df.columns:
+        gb.configure_column(
+            field="Date published",
+            sortable=True,
+            suppressMenu=True
+        )
+
+    # Status value
     cell_style = JsCode("""
     function(params){
     const v = params.value;
@@ -100,12 +112,10 @@ def show():
     return base;
     }
     """)
-    gb.configure_column("Status", cellStyle=cell_style, width=140)
     gb.configure_selection(
-        selection_mode='single',   # only let them select one row at a time
-        use_checkbox=True          # show checkboxes for selection
+        selection_mode='single',   # one single line
+        use_checkbox=True          # checkboxes
     )
-
 
     grid_opts = gb.build()
     grid_opts["domLayout"] = "normal"
@@ -114,7 +124,6 @@ def show():
     grid_opts["suppressRowClickSelection"] = True
     grid_opts["rowSelection"] = "single"
     grid_opts["quickFilterText"] = q or ""
-
 
     resp = AgGrid(
         display_df,
@@ -125,15 +134,14 @@ def show():
         height=520,
         theme="balham"
     )
-    # Action buttons below the table
+    # ---- Accion bar out of the iframe
     sel = resp.get("selected_rows", [])
     selected_id = get_selected_id(sel)
-
 
     c1, c2, c3 = st.columns([1,1,1])
     with c1:
         st.button("🔎 Open", disabled=selected_id is None,
-                on_click=lambda: (_ for _ in ()).throw(SystemExit))  # TODO: implement this 
+                on_click=lambda: (_ for _ in ()).throw(SystemExit))  # placeholder 
     with c2:
         if st.button("✏️ Edit selected", disabled=selected_id is None):
             st.query_params["page"] = "My Ideas"
@@ -144,3 +152,5 @@ def show():
             st.query_params["page"] = "Home"
             st.query_params["delete_id"] = str(selected_id)
             st.rerun()
+
+  

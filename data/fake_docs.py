@@ -28,7 +28,7 @@ def make_fake_docs(n: int = 30) -> pd.DataFrame:
         pub = _rand_date(fd, td)
         rows.append({
             "id": 1600 + i,
-            "Status": random.choices(STATUSES, weights=[0.5, 0.35, 0.15])[0],  # Bias toward "On Review"
+            "Status": random.choices(STATUSES, weights=[0, 1, 0])[0],  # Bias toward "On Review"
             "From date": fd,
             "To date": td,
             "Document name": f"PROFORMA/{pub.strftime('%d/%m/%Y')}",

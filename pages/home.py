@@ -1,7 +1,9 @@
 # pages/home.py
 import streamlit as st
+
 import pandas as pd
 from data.fake_docs import STATUSES
+from styles.home import load_css
 
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
@@ -29,6 +31,8 @@ def _init_state():
         st.session_state.date_sort = None
 
 def show():
+    # Load custom CSS for home page
+    load_css()
     _init_state()
 
     # --- base df with real datetime for filtering
@@ -43,19 +47,34 @@ def show():
         st.success(flash_msg)
 
     # -------- Filters
-    c1, c2, c3, c4 = st.columns([1,1,1,2])
-    with c1:
-        status = st.multiselect("Status", STATUSES, default=["Accepted"])
-    with c2:
-        fd = st.date_input("From date", value=None)
-    with c3:
-        td = st.date_input("To date", value=None)
-    with c4:
-        q = st.text_input("Search (name / doc / issue)")
 
-    m = df["Status"].isin(status)
+    # Filters row: Search, From date, To date, Category, Filter button
+    # Make search, from, and to date boxes less wide
+    filter_cols = st.columns([1.2,0.4,0.4,0.4,0.2])
+    with filter_cols[0]:
+        q = st.text_input("Search (name / doc / issue)")
+    with filter_cols[1]:
+        fd = st.date_input("From date", value=None)
+    with filter_cols[2]:
+        td = st.date_input("To date", value=None)
+    with filter_cols[3]:
+        # Category dropdown
+        cat_options = sorted(df["Category"].dropna().unique()) if "Category" in df.columns else []
+        category = st.selectbox("Category", options=["All"] + cat_options, index=0)
+    with filter_cols[4]:
+        st.markdown("""
+            <div class='filter-btn-wrap'>
+                <button class='filter-btn'>
+                    <span style='font-size: 18px; margin-right: 6px;'>🔎</span> Filter
+                </button>
+            </div>
+        """, unsafe_allow_html=True)
+
+    m = pd.Series([True] * len(df))
     if fd: m &= df["From date"] >= pd.to_datetime(fd)
     if td: m &= df["To date"] <= pd.to_datetime(td)
+    if category and category != "All":
+        m &= df["Category"] == category
     if q:
         ql = q.lower()
         m &= (
@@ -67,7 +86,10 @@ def show():
 
 
     # Only show: Title (from Name), Date published, Short Description (from Description), Category
+    # Add 'id' column for selection, but hide it in the grid
     display_df = pd.DataFrame()
+    if "id" in df.columns:
+        display_df["id"] = df["id"]
     if "Name" in df.columns:
         display_df["Title"] = df["Name"]
     if "Date published" in df.columns:
@@ -79,6 +101,9 @@ def show():
 
     # ---- AgGrid config
     gb = GridOptionsBuilder.from_dataframe(display_df)
+    # Hide the id column from display but keep it for selection
+    if "id" in display_df.columns:
+        gb.configure_column("id", hide=True)
     # Make Short Description column much wider
     if "Short Description" in display_df.columns:
         gb.configure_column("Short Description", width=1000)
@@ -92,7 +117,8 @@ def show():
         gb.configure_column(
             field = "Title",
             sortable=True,
-            suppressMenu=True
+            suppressMenu=True,
+            checkboxSelection=True
         )
     if "Date published" in display_df.columns:
         gb.configure_column(

@@ -5,9 +5,10 @@ from pages.header import show_header
 from pages import home as home_page, publish_idea
 from pages import edit_idea as edit_idea_page
 
+
 def _qp_get(name, default=None):
     v = st.query_params.get(name, default)
-    # Normalize list -> first element
+    # Sometimes we get a list back, so just grab the first item if that happens
     if isinstance(v, (list, tuple)):
         return v[0] if v else default
     return v
@@ -17,21 +18,24 @@ def _init_docs_once():
         st.session_state.home_docs = make_fake_docs(35)
 
 def show():
-    """Display the dashboard page with header and content"""
+    """Shows the main dashboard with header and page content"""
     
     st.set_page_config(layout="wide")
     _init_docs_once()
 
-    # Load dashboard-specific CSS
+
+    # Load up the dashboard styling
     dashboard_styles.load_css()
    
-    # Render header and get active tab from URL
+    # Show the header and get which page they're on from the URL
     active = show_header()
 
-    # --- read and normalize QPs
+
+    # Figure out which tab is active by checking URL params and session state
     active_qp = _qp_get("page")
     active_ss = st.session_state.get("active_tab")
     active = active_qp or active_ss or "Home"
+
 
     edit_id_qp = _qp_get("edit_id")
     if edit_id_qp is not None:
@@ -41,11 +45,13 @@ def show():
             st.session_state["edit_id"] = str(edit_id_qp)
 
 
-    # Save active tab to session state
+
+    # Remember which tab they're on
     st.session_state["active_tab"] = active
    
 
-    # ===== Content based on active tab =====
+
+    # Show the right content based on which tab is active
     st.markdown('<div class="dashboard-content">', unsafe_allow_html=True)
     
     if active == "Home":
@@ -55,10 +61,10 @@ def show():
         if "edit_id" in st.session_state:
             edit_idea_page.show()
         else:
-            st.write("🧠 My Ideas page.")
+            st.write("🧠 This is where you'll see all your ideas - we're still building this part!")
     elif active == "Ideas":
             publish_idea.show()
     else:
-        st.write("🏠 Home content here.")
+        st.write("🏠 Welcome to the dashboard - select a tab above to get started.")
     
     st.markdown('</div>', unsafe_allow_html=True)

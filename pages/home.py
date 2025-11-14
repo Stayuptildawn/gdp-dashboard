@@ -1,7 +1,9 @@
 # pages/home.py
 import streamlit as st
+
 import pandas as pd
 from data.fake_docs import STATUSES
+from styles.home import load_css
 
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
@@ -22,61 +24,99 @@ def _init_state():
     if "home_docs" not in st.session_state:
         st.error("No hay datos en sesión. Vuelve al inicio.")
         st.stop()
+    # Initialize sort states: None, 'asc', 'desc'
+    if "title_sort" not in st.session_state:
+        st.session_state.title_sort = None
+    if "date_sort" not in st.session_state:
+        st.session_state.date_sort = None
 
 def show():
+    # Load custom CSS for home page
+    load_css()
     _init_state()
 
     # --- base df with real datetime for filtering
     df = st.session_state.home_docs.copy()
     for c in ["From date", "To date", "Date published"]:
         df[c] = pd.to_datetime(df[c])  # ensure dtype
-
-    st.subheader("Documents")
+        
     # Flash success message from edit_idea submit
     flash_msg = st.session_state.pop("flash_success", None)
     if flash_msg:
         st.success(flash_msg)
 
     # -------- Filters
-    c1, c2, c3, c4 = st.columns([1,1,1,2])
-    with c1:
-        status = st.multiselect("Status", STATUSES, default=["Accepted"])
-    with c2:
-        fd = st.date_input("From date", value=None)
-    with c3:
-        td = st.date_input("To date", value=None)
-    with c4:
-        q = st.text_input("Search (name / doc / issue)")
 
-    m = df["Status"].isin(status)
+    # Filters row: Search, From date, To date, Category, Filter button
+    # Make search, from, and to date boxes less wide
+    filter_cols = st.columns([1.2,0.4,0.4,0.4,0.2])
+    with filter_cols[0]:
+        q = st.text_input("Search (name / description)")
+    with filter_cols[1]:
+        fd = st.date_input("From date", value=None)
+    with filter_cols[2]:
+        td = st.date_input("To date", value=None)
+    with filter_cols[3]:
+        # Category dropdown
+        cat_options = sorted(df["Category"].dropna().unique()) if "Category" in df.columns else []
+        category = st.selectbox("Category", options=["All"] + cat_options, index=0)
+
+    m = pd.Series([True] * len(df))
     if fd: m &= df["From date"] >= pd.to_datetime(fd)
     if td: m &= df["To date"] <= pd.to_datetime(td)
+    if category and category != "All":
+        m &= df["Category"] == category
     if q:
         ql = q.lower()
         m &= (
-            df["Document name"].str.lower().str.contains(ql) |
             df["Name"].str.lower().str.contains(ql) |
-            df["Issue Number"].str.lower().str.contains(ql)
+            df["Description"].str.lower().str.contains(ql)
         )
     df = df[m].reset_index(drop=True)
 
-    # Columns to hide from the Home table (long text fields used only in edit view)
-    hidden_cols = [
-        "Description",
-        "Detailed Description",
-        "Estimated Impact / Target Audience",
-    ]
-    display_df = df.drop(columns=[c for c in hidden_cols if c in df.columns])
 
-    # -------- Copy to display: format dates as strings for the grid
-    grid_df = display_df.copy()
-    for c in ["From date", "To date", "Date published"]:
-        grid_df[c] = grid_df[c].dt.strftime("%Y-%m-%d")   # or "%d/%m/%Y"
+    # Only show: Title (from Name), Date published, Short Description (from Description), Category
+    # Add 'id' column for selection, but hide it in the grid
+    display_df = pd.DataFrame()
+    if "id" in df.columns:
+        display_df["id"] = df["id"]
+    if "Name" in df.columns:
+        display_df["Title"] = df["Name"]
+    if "Date published" in df.columns:
+        display_df["Date published"] = df["Date published"].dt.strftime("%Y-%m-%d")
+    if "Description" in df.columns:
+        display_df["Short Description"] = df["Description"]
+    if "Category" in df.columns:
+        display_df["Category"] = df["Category"]
 
     # ---- AgGrid config
     gb = GridOptionsBuilder.from_dataframe(display_df)
+    # Hide the id column from display but keep it for selection
+    if "id" in display_df.columns:
+        gb.configure_column("id", hide=True)
+    # Make Short Description column much wider
+    if "Short Description" in display_df.columns:
+        gb.configure_column("Short Description", width=1000)
 
-  
+
+
+    # Enable AgGrid sort/filter icons for Title and Date published, but override their sort/filter events
+    # so that clicking the icon cycles through the three states only (A→Z, Z→A, none for Title; Earliest→Latest, Latest→Earliest, none for Date published)
+    # This is achieved by using AgGrid's onSortChanged event and a Streamlit callback
+    if "Title" in display_df.columns:
+        gb.configure_column(
+            field = "Title",
+            sortable=True,
+            suppressMenu=True,
+            checkboxSelection=True
+        )
+    if "Date published" in display_df.columns:
+        gb.configure_column(
+            field="Date published",
+            sortable=True,
+            suppressMenu=True
+        )
+
     # Status value
     cell_style = JsCode("""
     function(params){
@@ -88,7 +128,6 @@ def show():
     return base;
     }
     """)
-    gb.configure_column("Status", cellStyle=cell_style, width=140)
     gb.configure_selection(
         selection_mode='single',   # one single line
         use_checkbox=True          # checkboxes

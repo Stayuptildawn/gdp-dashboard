@@ -3,9 +3,10 @@ import pandas as pd
 from datetime import date
 from styles import edit_idea as edit_idea
 
+
 # --- helpers ---
 def _persist_changes(form, status="On Review", set_date=True):
-    """Guarda cambios en el DF y navega a Home."""
+    """Save the changes to the dataframe and head back to the home page."""
     try:
         df = st.session_state.get("home_docs")
         edit_id = st.session_state.get("edit_id")
@@ -23,10 +24,11 @@ def _persist_changes(form, status="On Review", set_date=True):
                 df.at[i, "Status"] = status
                 st.session_state.home_docs = df
     except Exception as e:
-        st.error(f"Failed to update idea: {e}")
+        st.error(f"Couldn't save your changes right now. Give it another try? (Error: {e})")
         st.stop()
 
-    st.session_state["flash_success"] = "Changes saved"
+
+    st.session_state["flash_success"] = "Your changes have been saved!"
     st.session_state.edit_validate = False
     st.query_params["page"] = "Home"
     try:
@@ -37,27 +39,31 @@ def _persist_changes(form, status="On Review", set_date=True):
     st.rerun()
 
 def _get_selected_idea():
-    """Return a dict with fields mapped for the edit form from the selected idea.
-    Falls back to empty defaults when not available.
+    """Grab the selected idea and map it to the form fields.
+    Returns empty defaults if nothing's found.
     """
-    # # Ensure the documents table exists (fallback if user navigates directly)
+    # Make sure we have the data loaded
     if "home_docs" not in st.session_state:
-        st.error("Error on creating the list of ideas")
+        st.error("Hmm, couldn't load your ideas. Try refreshing the page.")
         return None
+
 
 
     df = st.session_state.home_docs
     edit_id = st.session_state.get("edit_id")
 
+
     if edit_id is None:
         return None
+
 
     try:
         row = df.loc[df["id"] == edit_id].iloc[0]
     except Exception:
         return None
 
-    # Map dataset columns to form fields
+
+    # Pull the data from the table and map it to what the form expects
     return {
         "id": int(row["id"]),
         "Idea Title": str(row.get("Name", "")),
@@ -70,16 +76,19 @@ def _get_selected_idea():
     }
 
 
+
 def show():
-    # Load page-specific CSS so inputs have persistent black borders
+    # Load the styling to keep input borders consistent
     edit_idea.load_css()
     st.subheader("1. Idea Submission Form")
 
-    # Initialize validation flag (used to show inline warnings)
+
+    # Set up validation flag for showing warnings
     if "edit_validate" not in st.session_state:
         st.session_state.edit_validate = False
 
-    # Prefill with selected idea if present
+
+    # Fill in the form with the idea we're editing, if there is one
     idea = _get_selected_idea()
     defaults = {
         "Idea Title": "",
@@ -92,10 +101,12 @@ def show():
     }
     data = {**defaults, **(idea or {})}
 
+
     c1, c2 = st.columns(2)
 
+
     with c1:
-        # Build category options dynamically from dataset + sensible fallbacks
+        # Build the category dropdown from existing data plus some fallback options
         options = []
         try:
             options = sorted(set(st.session_state.home_docs.get("Category", pd.Series()).dropna().astype(str)))
@@ -104,7 +115,7 @@ def show():
         fallback = ["TRANSPORT", "HEALTH", "ENERGY", "AI", "Business", "Technology", "Social"]
         options = list(dict.fromkeys([*(options or []), *fallback]))
         selected_idx = options.index(data["Category of the idea"]) if data["Category of the idea"] in options else 0
-        # Inputs
+        # Form inputs
         title = st.text_input("Idea Title", value=data["Idea Title"])
         title_warn = st.empty()
         category = st.selectbox("Category of the idea", options, index=selected_idx)
@@ -113,13 +124,15 @@ def show():
         detailed_desc = st.text_area("Detailed Description", value=data["Detailed Description"], height=200)
         detailed_warn = st.empty()
 
-        # Inline warnings below inputs when validation is active (show next to each control)
+
+        # Show warning messages under any empty required fields
         if st.session_state.get("edit_validate") and not (title or "").strip():
-            title_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Fill the compulsory fields!")}</div>', unsafe_allow_html=True)
+            title_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Please fill in all required fields")}</div>', unsafe_allow_html=True)
         if st.session_state.get("edit_validate") and not (short_desc or "").strip():
-            short_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Fill the compulsory fields!")}</div>', unsafe_allow_html=True)
+            short_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Please fill in all required fields")}</div>', unsafe_allow_html=True)
         if st.session_state.get("edit_validate") and not (detailed_desc or "").strip():
-            detailed_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Fill the compulsory fields!")}</div>', unsafe_allow_html=True)
+            detailed_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Please fill in all required fields")}</div>', unsafe_allow_html=True)
+
 
         st.markdown("<h6>Upload Files</h6>", unsafe_allow_html=True)
         displayed_doc = data.get("Document name") or "No document attached"
@@ -130,23 +143,26 @@ def show():
         </div>
         """, unsafe_allow_html=True)
 
+
     estimated_impact = st.text_input("Estimated Impact / Target Audience", value=data["Estimated Impact / Target Audience"], placeholder="e.g., Students, SMEs, City residents")
     impact_warn = st.empty()
     if st.session_state.get("edit_validate") and not (estimated_impact or "").strip():
-        impact_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Fill the compulsory fields!")}</div>', unsafe_allow_html=True)
+        impact_warn.markdown(f'<div class="warning-message">{st.session_state.get("edit_warning", "Please fill in all required fields")}</div>', unsafe_allow_html=True)
     vis_opts = ["Public", "Private"]
     vis_idx = vis_opts.index(data["Visibility Setting"]) if data["Visibility Setting"] in vis_opts else 0
     visibility = st.selectbox("Visibility Setting", vis_opts, index=vis_idx)
 
+
     with c2:
         st.subheader("2. Terms & Conditions")
         terms = st.checkbox("I have read and accept the Terms and Conditions.")
-        # Inline terms warning placed right under the checkbox
+        # Warning shows up right under the checkbox if they forgot to check it
         terms_warn = st.empty()
         if terms:
             st.session_state.pop("edit_terms_error", None)
         elif st.session_state.get("edit_terms_error"):
-            terms_warn.markdown('<div class="error-message">Please accept the terms and conditions.</div>', unsafe_allow_html=True)
+            terms_warn.markdown('<div class="error-message">You need to accept the terms and conditions.</div>', unsafe_allow_html=True)
+
 
         sc1, sc2 = st.columns(2)
         form = {
@@ -163,7 +179,7 @@ def show():
                 _persist_changes(form, status="On Review", set_date=True)
         with sc2:
             if st.button("Submit", type="primary"):
-                # Trigger validation for empty required fields
+                # Check if all the required fields are filled in
                 required_ok = all([
                     (title or "").strip(),
                     (short_desc or "").strip(),
@@ -171,16 +187,17 @@ def show():
                     (estimated_impact or "").strip(),
                 ])
 
+
                 if not required_ok or not terms:
                     st.session_state.edit_validate = True
-                    st.session_state.edit_warning = "Fill the compulsory fields!"
-                    # store a flag so the error shows after rerun
+                    st.session_state.edit_warning = "Please fill in all required fields"
+                    # Keep track so the error still shows after the page refreshes
                     st.session_state.edit_terms_error = not terms
                     st.rerun()
                 else:
-                    # Persist updates back to the table
+                    # Save everything back to the table
                     _persist_changes(form, status="Accepted", set_date=True)
-        st.info("Your idea will be public or visible to others. You can edit it anytime in 'My Ideas'")
+        st.info("💡 Once submitted, your idea will be visible to everyone. Don't worry - you can edit it anytime from 'My Ideas'.")
 
-    # terms warning is rendered inline next to the checkbox above
 
+    # The terms warning is displayed inline next to the checkbox above

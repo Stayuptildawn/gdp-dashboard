@@ -1,22 +1,23 @@
 import streamlit as st
 
 
+
 def load_css():
-    """Load CSS specific to the login page"""
+    """Loads up the CSS for the login page"""
     st.markdown("""
     <style>
-    /* Remove default Streamlit padding */
+    /* Get rid of that default padding Streamlit adds */
     .main > div {
         padding-top: 3rem;
         padding-bottom: 3rem;
     }
     
-    /* Login page background */
+    /* Background color for the login page */
     .stApp {
         background-color: #f8f9fa;
     }
     
-    /* Center the entire layout */
+    /* Keep everything centered and not too wide */
     .block-container {
         max-width: 1200px;
         padding-top: 5rem;
@@ -24,7 +25,7 @@ def load_css():
         padding-right: 2rem;
     }
     
-    /* Input groups */
+    /* Spacing for each input field */
     .input-group {
         margin-bottom: 1.2rem;
     }
@@ -37,7 +38,7 @@ def load_css():
         margin-bottom: 0.5rem;
     }
     
-    /* Style text inputs */
+    /* Make the text inputs look nice */
     .stTextInput > div > div > input {
         background-color: #ffffff;
         border: 1px solid #d1d5db;
@@ -58,17 +59,17 @@ def load_css():
         color: #9ca3af;
     }
     
-    /* Hide Streamlit-generated labels */
+    /* Streamlit adds labels we don't want, so hide them */
     .stTextInput > label {
         display: none;
     }
     
-    /* Hide the actual checkbox (we're using HTML version) */
+    /* We're using a custom checkbox, so hide the default one */
     .stCheckbox {
         display: none;
     }
     
-    /* Forgot password link */
+    /* Style for the "forgot password" link */
     .forgot-link button {
         background: transparent !important;
         border: none !important;
@@ -86,12 +87,12 @@ def load_css():
         text-decoration: underline !important;
     }
     
-    /* Button group spacing */
+    /* Add some space around the button group */
     .button-group {
         margin: 0.75rem 0;
     }
     
-    /* Primary button (Sign in) */
+    /* Main "Sign in" button styling */
     .stButton > button[kind="primary"] {
         background-color: #ef4444 !important;
         color: white !important;
@@ -110,7 +111,7 @@ def load_css():
         box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3) !important;
     }
     
-    /* Secondary button (SSO) */
+    /* SSO button - less prominent than the main one */
     .stButton > button:not([kind="primary"]) {
         background-color: #ffffff !important;
         color: #374151 !important;
@@ -128,7 +129,7 @@ def load_css():
         border-color: #9ca3af !important;
     }
     
-    /* Sign up text */
+    /* "Don't have an account?" text at the bottom */
     .signup-text {
         text-align: center;
         margin-top: 1.5rem;
@@ -146,7 +147,7 @@ def load_css():
         text-decoration: underline;
     }
     
-    /* Illustration container */
+    /* Container for the side illustration */
     .illustration-container {
         display: flex;
         align-items: center;
@@ -154,12 +155,13 @@ def load_css():
         padding: 2rem;
     }
     
-    /* Column spacing */
+    /* Padding between columns */
     div[data-testid="column"] {
         padding: 1rem;
     }
 
-    /* Error message styling */
+
+    /* Red error messages */
     .error-message {
         background-color: #ef4444;
         color: white;
@@ -172,7 +174,8 @@ def load_css():
         font-size: 0.85rem;
     }
 
-    /* Warning message styling */
+
+    /* Yellow warning messages */
     .warning-message {
         background-color: #FFD700;
         color: black;
@@ -185,9 +188,9 @@ def load_css():
         font-size: 0.85rem;
     }
     
-    /* ==================== MODAL POPUP STYLES ==================== */
+    /* ==================== MODAL POPUP STUFF ==================== */
     
-    /* Modal overlay - clickable dark background */
+    /* Dark background overlay when modal is open */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -203,7 +206,7 @@ def load_css():
         cursor: pointer;
     }
     
-    /* Fade in animation */
+    /* Smooth fade-in effect */
     @keyframes fadeIn {
         from { 
             opacity: 0; 
@@ -213,7 +216,7 @@ def load_css():
         }
     }
     
-    /* Modal content box - not clickable */
+    /* The actual modal box - clicking here won't close it */
     .modal-content {
         background: white;
         border-radius: 12px;
@@ -227,7 +230,7 @@ def load_css():
         cursor: default;
     }
     
-    /* Slide up animation */
+    /* Slide up animation when modal appears */
     @keyframes slideUp {
         from {
             transform: translateY(50px);
@@ -239,7 +242,7 @@ def load_css():
         }
     }
     
-    /* Modal image styling */
+    /* Images inside the modal */
     .modal-content img {
         display: block;
         width: 100%;
@@ -247,6 +250,6 @@ def load_css():
         border-radius: 12px;
     }
     
-    /* ==================== END MODAL STYLES ==================== */
+    /* ==================== END MODAL STUFF ==================== */
     </style>
     """, unsafe_allow_html=True)

@@ -33,16 +33,19 @@ left, right = st.columns([1, 2])
 with left:
     st.header("My Messages")
 
-    for _, row in contacts_df.iterrows():
+    for idx, row in contacts_df.iterrows():
         contact_name = row["name"]
         contact_messages = messages_df[messages_df["sender"] == contact_name]
 
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.write(f"**{contact_name}**")
+            st.markdown(f"<span style='font-size:17px; font-weight:600; padding:4px 0; display:inline-block;'>{contact_name}</span>", unsafe_allow_html=True)
         with col2:
             if st.button("Open", key=f"open_{contact_name}"):
                 st.session_state.selected_contact = contact_name
+        # Add a divider after each contact except the last
+        if idx < len(contacts_df) - 1:
+            st.markdown("<hr style='margin:2px 0;'>", unsafe_allow_html=True)
 
 
 # ====================

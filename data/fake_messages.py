@@ -102,7 +102,7 @@ def generate_thread(contact_name, start_time):
             "category": category if i == 1 else "",
             "text": body,
             "timestamp": current_time,
-            "read": True,  # replies are usually 'read'
+            "read": True, 
         })
 
         sender = next_sender

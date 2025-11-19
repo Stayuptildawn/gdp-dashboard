@@ -36,18 +36,30 @@ with left:
     for idx, row in contacts_df.iterrows():
         contact_name = row["name"]
         contact_subject = row.get("subject", "")
-        contact_messages = messages_df[messages_df["sender"] == contact_name]
+        # Count unread messages for this contact
+        unread_count = messages_df[(messages_df["sender"] == contact_name) & (messages_df["receiver"] == "User") & (messages_df["read"] == False)].shape[0]
 
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.markdown(
-                f"<span style='font-size:17px; font-weight:600; padding:4px 0; display:inline-block;'>{contact_name}</span> "
-                f"<span style='font-size:14px; color:#555; font-weight:400; margin-left:8px;'>{contact_subject}</span>",
-                unsafe_allow_html=True
-            )
+            contact_html = f"""
+            <div style='display:flex; align-items:center; gap:12px;'>
+                <span style='font-size:17px; font-weight:600;'>{contact_name}</span>
+                <span style='font-size:14px; color:#555; font-weight:400;'>{contact_subject}</span>
+                {f"<span style='background:#4CAF50; color:#fff; border-radius:50%; padding:4px 10px; font-size:15px; font-weight:600; display:inline-block;'>{unread_count}</span>" if unread_count > 0 else ""}
+            </div>
+            """
+            st.markdown(contact_html, unsafe_allow_html=True)
         with col2:
             if st.button("Open", key=f"open_{contact_name}"):
                 st.session_state.selected_contact = contact_name
+                # Mark all messages in this thread as read
+                mask = (
+                    (st.session_state.messages["sender"] == contact_name) &
+                    (st.session_state.messages["receiver"] == "User") &
+                    (st.session_state.messages["read"] == False)
+                )
+                st.session_state.messages.loc[mask, "read"] = True
+                st.rerun()
         # Add a divider after each contact except the last
         if idx < len(contacts_df) - 1:
             st.markdown("<hr style='margin:2px 0;'>", unsafe_allow_html=True)
@@ -63,7 +75,7 @@ with right:
         selected = st.session_state.selected_contact
         st.subheader(f"Messages with {selected}")
 
-        relevant = messages_df[(messages_df["sender"] == selected) | (messages_df["receiver"] == selected)]
+        relevant = messages_df[(messages_df["sender"] == selected) | (messages_df["receiver"] == selected)].sort_values("timestamp")
 
         # Custom CSS for compact chat bubbles
         st.markdown("""
@@ -98,9 +110,25 @@ with right:
         """, unsafe_allow_html=True)
 
         user_name = "User"
-        # Build all messages as a single HTML string inside the scrollable box
-        chat_html = "<div id='chat-scroll-box' style='height:400px; overflow-y:auto; border:1px solid #eee; border-radius:12px; padding:10px; background:#fafafa;'>"
-        for _, msg in relevant.iterrows():
+        # Build all messages as a single HTML string inside a flexbox column-reverse scrollable box
+        st.markdown("""
+        <style>
+        #chat-scroll-box {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 10px;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column-reverse;
+            scroll-behavior: smooth;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        chat_html = "<div id='chat-scroll-box'>"
+        # Render messages in reverse order
+        for _, msg in relevant.iloc[::-1].iterrows():
             is_sent = msg["sender"] == user_name
             bubble_class = "sent" if is_sent else "received"
             align = "right" if is_sent else "left"

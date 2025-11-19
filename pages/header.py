@@ -61,6 +61,7 @@ def show_header():
         "Team",
         "Reports/Analytics",
         "Profile",
+        "Messages"
     ]
 
     active = st.query_params.get("page", "Home")

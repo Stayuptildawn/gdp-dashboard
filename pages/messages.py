@@ -3,11 +3,16 @@ import pandas as pd
 from datetime import datetime, timedelta
 import random
 from data.fake_messages import make_fake_contacts, make_fake_messages, CONTACTS
+# Add header
+from pages.header import show_header
 # -----------------------------------------
 # MAIN STREAMLIT UI
 # -----------------------------------------
 
 st.set_page_config(layout="wide")
+
+# Show the header at the top, with Messages active
+show_header("Messages")
 
 # Load data once
 if "contacts" not in st.session_state:

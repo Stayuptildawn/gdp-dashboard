@@ -3,7 +3,7 @@ import streamlit as st
 from styles import header as header_styles
 
 
-def show_header():
+def show_header(active_page=None):
     """Renders the top header and returns the active page name."""
     header_styles.load_css()
 
@@ -64,7 +64,8 @@ def show_header():
         "Messages"
     ]
 
-    active = st.query_params.get("page", "Home")
+    # Use provided active_page if set, else use query param
+    active = active_page if active_page is not None else st.query_params.get("page", "Home")
 
     links = []
     for i, name in enumerate(NAV_ITEMS):

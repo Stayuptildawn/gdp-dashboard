@@ -35,11 +35,16 @@ with left:
 
     for idx, row in contacts_df.iterrows():
         contact_name = row["name"]
+        contact_subject = row.get("subject", "")
         contact_messages = messages_df[messages_df["sender"] == contact_name]
 
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.markdown(f"<span style='font-size:17px; font-weight:600; padding:4px 0; display:inline-block;'>{contact_name}</span>", unsafe_allow_html=True)
+            st.markdown(
+                f"<span style='font-size:17px; font-weight:600; padding:4px 0; display:inline-block;'>{contact_name}</span> "
+                f"<span style='font-size:14px; color:#555; font-weight:400; margin-left:8px;'>{contact_subject}</span>",
+                unsafe_allow_html=True
+            )
         with col2:
             if st.button("Open", key=f"open_{contact_name}"):
                 st.session_state.selected_contact = contact_name

@@ -113,6 +113,11 @@ def generate_thread(contact_name, start_time):
 def make_fake_contacts(n: int = 5) -> pd.DataFrame:
     """Generate a fake contacts list."""
     contacts = CONTACTS[:n]
+    # Assign a subject to each contact
+    subjects = SUBJECTS[:]
+    random.shuffle(subjects)
+    for i, contact in enumerate(contacts):
+        contact["subject"] = subjects[i % len(subjects)]
     return pd.DataFrame(contacts)
 
 

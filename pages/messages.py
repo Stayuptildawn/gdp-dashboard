@@ -42,10 +42,12 @@ with left:
         col1, col2 = st.columns([3, 1])
         with col1:
             contact_html = f"""
-            <div style='display:flex; align-items:center; gap:12px;'>
-                <span style='font-size:17px; font-weight:600;'>{contact_name}</span>
-                <span style='font-size:14px; color:#555; font-weight:400;'>{contact_subject}</span>
-                {f"<span style='background:#4CAF50; color:#fff; border-radius:50%; padding:4px 10px; font-size:15px; font-weight:600; display:inline-block;'>{unread_count}</span>" if unread_count > 0 else ""}
+            <div style='display:flex; align-items:center; width:100%;'>
+                <div style='flex:1; min-width:0;'>
+                    <span style='font-size:17px; font-weight:600;'>{contact_name}</span>
+                    <span style='font-size:14px; color:#555; font-weight:400; margin-left:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px; display:inline-block;'>{contact_subject}</span>
+                </div>
+                {f"<div style='margin-left:12px;'><span style='background:#4CAF50; color:#fff; border-radius:50%; padding:4px 10px; font-size:15px; font-weight:600; display:inline-block;'>{unread_count}</span></div>" if unread_count > 0 else ""}
             </div>
             """
             st.markdown(contact_html, unsafe_allow_html=True)

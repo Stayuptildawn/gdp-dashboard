@@ -3,31 +3,22 @@ import streamlit as st
 from styles import header as header_styles
 
 
-
 def show_header():
-    """Displays the header with logo, title, user info, and nav bar"""
-    
-    # Load up the header styling
+    """Renders the top header and returns the active page name."""
     header_styles.load_css()
-
 
     username = st.session_state.get("username", "User")
     logo_path = "elements/upm_logo.png"
 
-
-    # Top header section - white box with the UPM branding
+    # ===== White header card =====
     st.markdown('<div class="app-header">', unsafe_allow_html=True)
     c1, c2 = st.columns([0.75, 0.25])
-
 
     with c1:
         lc, rc = st.columns([0.12, 0.88])
         with lc:
             if os.path.exists(logo_path):
-                # Just use a fixed width here - looks better than container width
                 st.image(logo_path, width=48)
-            else:
-                st.write("")
         with rc:
             st.markdown(
                 """
@@ -39,37 +30,40 @@ def show_header():
                 unsafe_allow_html=True,
             )
 
-
     with c2:
-        st.markdown(f"""
-            <div class="user-section">
-                <!-- User icon and logout button on the left -->
-                <div class="user-column">
-                    <div class="user-icon">👤</div>
-                    <form action="?logout=true" method="post" style="margin:0;">
-                        <button class="logout-btn">Logout</button>
-                    </form>
-                </div>
-                <!-- Username greeting and settings button on the right -->
-                <div class="user-column">
-                    <div class="user-name">Hello, {username}</div>
-                    <form action="?page=Settings" method="get" style="margin:0;">
-                        <button class="settings-btn">Settings</button>
-                    </form>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        uc1, uc2 = st.columns([0.35, 0.65])
+        with uc1:
+            st.markdown('<div class="user-icon">👤</div>', unsafe_allow_html=True)
+        with uc2:
+            st.markdown(
+                f'<div class="user-name">Hello, {username}</div>',
+                unsafe_allow_html=True,
+            )
+            if st.button("Settings", key="header_settings"):
+                st.query_params["page"] = "Profile"
+                st.rerun()
+            if st.button("Logout", key="header_logout"):
+                st.session_state.authenticated = False
+                st.session_state.username = None
+                st.query_params.clear()
+                st.rerun()
 
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Navigation bar - blue strip with page links
-    NAV_ITEMS = ["Home", "Ideas", "My Ideas"]
+    # ===== Blue navbar (single flex row, no wrapping) =====
+    NAV_ITEMS = [
+        "Home",
+        "Ideas",
+        "My Ideas",
+        "New Idea",          # <- add this
+        "Experiments",
+        "Sprints",
+        "Team",
+        "Reports/Analytics",
+        "Profile",
+    ]
 
-
-    # Figure out which page we're on from the URL, default to Home if nothing's set
     active = st.query_params.get("page", "Home")
-
 
     links = []
     for i, name in enumerate(NAV_ITEMS):
@@ -79,9 +73,9 @@ def show_header():
         if i < len(NAV_ITEMS) - 1:
             links.append('<span class="sep">|</span>')
 
+    st.markdown(
+        f'<div class="navbar">{" ".join(links)}</div>',
+        unsafe_allow_html=True,
+    )
 
-    st.markdown(f'<div class="navbar">{"".join(links)}</div>', unsafe_allow_html=True)
-
-
-    # Send back the active page so the dashboard knows what to show
     return active

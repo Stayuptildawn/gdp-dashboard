@@ -21,9 +21,9 @@ if os.path.exists(csv_path):
         df_reload = pd.read_csv(csv_path)
         for col in ["From date", "To date", "Date published"]:
             if col in df_reload.columns:
-                df_reload[col] = pd.to_datetime(df_reload[col], errors='coerce')
+                df_reload[col] = pd.to_datetime(df_reload[col], errors="coerce")
         if "id" in df_reload.columns:
-            df_reload = df_reload.sort_values('id', ascending=False).reset_index(drop=True)
+            df_reload = df_reload.sort_values("id", ascending=False).reset_index(drop=True)
         st.session_state.home_docs = df_reload
     except Exception as e:
         st.error(f"Error reloading data: {e}")
@@ -32,7 +32,7 @@ if os.path.exists(csv_path):
 def get_selected_id(sel):
     """Extract the selected ID from AgGrid selection"""
     if isinstance(sel, list):
-        return sel[0]["id"] if len(sel) > 0 else None
+        return sel[0].get("id") if len(sel) > 0 else None
     try:
         if isinstance(sel, pd.DataFrame):
             return sel.iloc[0]["id"] if not sel.empty else None
@@ -51,6 +51,10 @@ st.markdown('<div class="dashboard-content">', unsafe_allow_html=True)
 
 st.subheader("Ideas")
 
+# Role check
+role = st.session_state.get("role", "student")
+is_student = role == "student"
+
 # Initialize session state
 if "home_docs" not in st.session_state:
     st.warning("No ideas data loaded yet. Please check your data source.")
@@ -62,7 +66,7 @@ df = st.session_state.home_docs.copy()
 # Ensure datetime columns
 for c in ["From date", "To date", "Date published"]:
     if c in df.columns:
-        df[c] = pd.to_datetime(df[c], errors='coerce')
+        df[c] = pd.to_datetime(df[c], errors="coerce")
 
 # Flash message from edit
 flash_msg = st.session_state.pop("flash_success", None)
@@ -93,8 +97,8 @@ if category and category != "All":
 if search:
     ql = search.lower()
     m &= (
-        df["Name"].str.lower().str.contains(ql, na=False) |
-        df["Description"].str.lower().str.contains(ql, na=False)
+        df["Name"].str.lower().str.contains(ql, na=False)
+        | df["Description"].str.lower().str.contains(ql, na=False)
     )
 df = df[m].reset_index(drop=True)
 
@@ -128,25 +132,25 @@ if "id" in display_df.columns:
 if "Short Description" in display_df.columns:
     gb.configure_column("Short Description", width=1000)
 
-# Configure sortable columns
+# Configure sortable columns (selection allowed for all roles)
 if "Title" in display_df.columns:
     gb.configure_column(
         field="Title",
         sortable=True,
         suppressMenu=True,
-        checkboxSelection=True
+        checkboxSelection=True,
     )
 if "Date published" in display_df.columns:
     gb.configure_column(
         field="Date published",
         sortable=True,
-        suppressMenu=True
+        suppressMenu=True,
     )
 
-# Selection configuration
+# Selection configuration – always allow single selection via checkbox
 gb.configure_selection(
-    selection_mode='single',
-    use_checkbox=True
+    selection_mode="single",
+    use_checkbox=True,
 )
 
 # Build grid options
@@ -161,11 +165,11 @@ grid_opts["rowSelection"] = "single"
 resp = AgGrid(
     display_df,
     gridOptions=grid_opts,
-    update_on=['selectionChanged'],
+    update_on=["selectionChanged"],
     allow_unsafe_jscode=True,
     fit_columns_on_grid_load=True,
     height=520,
-    theme="balham"
+    theme="balham",
 )
 
 # Action buttons
@@ -173,23 +177,30 @@ sel = resp.get("selected_rows", [])
 selected_id = get_selected_id(sel)
 
 c1, c2, c3 = st.columns([1, 1, 1])
+
+# Everyone can Open -> go to openIdea.py
 with c1:
-    st.button("🔎 Open", disabled=selected_id is None)
+    if st.button("🔎 Open", disabled=selected_id is None):
+        st.session_state.open_id = selected_id
+        st.switch_page("pages/openIdea.py")
+
+# Students cannot edit or delete
+can_modify = not is_student
+
 with c2:
-    if st.button("✏️ Edit selected", disabled=selected_id is None):
+    if st.button("✏️ Edit selected", disabled=(selected_id is None or not can_modify)):
         st.session_state.edit_id = selected_id
         st.switch_page("pages/edit_idea.py")
+
 with c3:
-    if st.button("🗑 Delete", disabled=selected_id is None):
-        # Delete the idea from session state and CSV
+    if st.button("🗑 Delete", disabled=(selected_id is None or not can_modify)):
         df_main = st.session_state.home_docs
         df_main = df_main[df_main["id"] != selected_id]
         st.session_state.home_docs = df_main.reset_index(drop=True)
-        
-        # Save to CSV
+
         csv_path = "data/ideas.csv"
         os.makedirs("data", exist_ok=True)
         df_main.to_csv(csv_path, index=False)
-        
+
         st.success("Idea deleted successfully!")
         st.rerun()

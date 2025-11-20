@@ -1,5 +1,4 @@
-username,password,status
-admin,aA1234,active
-testuser,aA1234,deleted
-lockeduser,pass456,locked
-student1,student1,active
+username,password,status,role
+admin,aA1234,active,admin
+investor1,pass123,active,investor
+student1,pass123,active,student

@@ -3,31 +3,30 @@ import streamlit as st
 from styles import header as header_styles
 
 
-
-def show_header():
-    """Displays the header with logo, title, user info, and nav bar"""
-    
-    # Load up the header styling
+def show_header(active_page=None):
+    """Renders the top header and returns the active page name."""
     header_styles.load_css()
-
 
     username = st.session_state.get("username", "User")
     logo_path = "elements/upm_logo.png"
+    is_authenticated = st.session_state.get("authenticated", False)
 
-
-    # Top header section - white box with the UPM branding
+    # ===== White header card =====
     st.markdown('<div class="app-header">', unsafe_allow_html=True)
     c1, c2 = st.columns([0.75, 0.25])
 
-
     with c1:
-        lc, rc = st.columns([0.12, 0.88])
+        lc, rc = st.columns([0.10, 0.90])
         with lc:
             if os.path.exists(logo_path):
-                # Just use a fixed width here - looks better than container width
-                st.image(logo_path, width=48)
-            else:
-                st.write("")
+                # Use HTML for better size control
+                import base64
+                with open(logo_path, "rb") as f:
+                    logo_b64 = base64.b64encode(f.read()).decode()
+                st.markdown(
+                    f'<img src="data:image/png;base64,{logo_b64}" style="width: 100%; max-width: 70px; height: auto; margin-top: 8px;">',
+                    unsafe_allow_html=True
+                )
         with rc:
             st.markdown(
                 """
@@ -39,49 +38,61 @@ def show_header():
                 unsafe_allow_html=True,
             )
 
-
     with c2:
-        st.markdown(f"""
-            <div class="user-section">
-                <!-- User icon and logout button on the left -->
-                <div class="user-column">
-                    <div class="user-icon">👤</div>
-                    <form action="?logout=true" method="post" style="margin:0;">
-                        <button class="logout-btn">Logout</button>
-                    </form>
+        if is_authenticated:
+            st.markdown(
+                f"""
+                <div style="display: flex; align-items: center; padding: 1rem 0; gap: 0.75rem;">
+                    <div style="font-size: 2rem;">👤</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.9rem; color: #374151; font-weight: 500;">Hello, {username}</div>
+                    </div>
                 </div>
-                <!-- Username greeting and settings button on the right -->
-                <div class="user-column">
-                    <div class="user-name">Hello, {username}</div>
-                    <form action="?page=Settings" method="get" style="margin:0;">
-                        <button class="settings-btn">Settings</button>
-                    </form>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True
+            )
+            sc1, sc2 = st.columns(2)
+            with sc1:
+                if st.button("Settings", key="header_settings", width="stretch"):
+                    st.switch_page("pages/profile.py")
+            with sc2:
+                if st.button("Logout", key="header_logout", width="stretch"):
+                    st.session_state.authenticated = False
+                    st.session_state.username = None
+                    st.switch_page("streamlit_app.py")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ===== Blue navbar - conditional based on authentication =====
+    if is_authenticated:
+        NAV_ITEMS = [
+            {"label": "Ideas", "page": "pages/dashboard.py", "icon": "💡"},
+            {"label": "My Ideas", "page": "pages/myideas.py", "icon": "📝"},
+            {"label": "New Idea", "page": "pages/publish_idea.py", "icon": "➕"},
+            {"label": "Experiments", "page": "pages/experiments.py", "icon": "🔬"},
+            {"label": "Sprints", "page": "pages/sprints.py", "icon": "⚡"},
+            {"label": "Team", "page": "pages/team.py", "icon": "👥"},
+            {"label": "Reports/Analytics", "page": "pages/reports.py", "icon": "📊"},
+            {"label": "Profile", "page": "pages/profile.py", "icon": "👤"},
+            {"label": "Messages", "page": "pages/messages.py", "icon": "💬"}
+        ]
+    else:
+        NAV_ITEMS = [
+            {"label": "Login", "page": "pages/login.py", "icon": "🔐"}
+        ]
+
+    st.markdown('<div class="navbar">', unsafe_allow_html=True)
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    cols = st.columns(len(NAV_ITEMS))
+    for idx, (col, item) in enumerate(zip(cols, NAV_ITEMS)):
+        with col:
+            st.page_link(
+                item["page"], 
+                label=item["label"],
+                icon=item["icon"],
+                width="stretch"
+            )
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
-
-    # Navigation bar - blue strip with page links
-    NAV_ITEMS = ["Home", "Ideas", "My Ideas"]
-
-
-    # Figure out which page we're on from the URL, default to Home if nothing's set
-    active = st.query_params.get("page", "Home")
-
-
-    links = []
-    for i, name in enumerate(NAV_ITEMS):
-        href = f"?page={name.replace(' ', '%20')}"
-        cls = "navlink active" if name == active else "navlink"
-        links.append(f'<a class="{cls}" href="{href}">{name}</a>')
-        if i < len(NAV_ITEMS) - 1:
-            links.append('<span class="sep">|</span>')
-
-
-    st.markdown(f'<div class="navbar">{"".join(links)}</div>', unsafe_allow_html=True)
-
-
-    # Send back the active page so the dashboard knows what to show
-    return active
+    return active_page

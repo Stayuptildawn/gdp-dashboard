@@ -5,19 +5,32 @@ A modular, modern Streamlit application for managing ideas and innovations with 
 
 ## 🎯 Features
 
-- **User Authentication** - Secure login system with session management
-- **Responsive Dashboard** - Wide-mode layout optimized for all screen sizes
-- **Modular Architecture** - Cleanly separated pages and components for easy maintenance
-- **Custom Styling** - Professional CSS for headers, forms, buttons, and UI elements
-- **Role-Based Navigation** - Dynamic navigation tabs (Home, Ideas, My Ideas)
-- **User Management** - Quick logout and settings functionality
+### Public Access
+- **📊 Statistics Dashboard** - View innovation metrics without login
+- **🔍 Browse Public Ideas** - Explore published ideas with advanced filtering
+- **📈 Category Analytics** - See idea distribution across categories
+- **🕒 Recent Activity** - Track the latest submissions
 
+### Authenticated Users
+- **✏️ Full CRUD Operations** - Create, read, update, and delete ideas
+- **👤 Personal Workspace** - Manage your own ideas in "My Ideas"
+- **📤 Publish Control** - Draft, review, and publish ideas
+- **🔐 User Authentication** - Secure login with rate limiting
+- **💾 CSV Persistence** - All changes saved automatically
+
+### Technical Features
+- **Wide-mode responsive layout**
+- **Interactive AgGrid tables** with sorting and pagination
+- **Real-time data synchronization** across pages
+- **Public/private visibility settings**
+- **Flash notifications** for user actions
+- **Modern UI** with custom CSS styling
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Python 3.8 or higher (3.11)
+- Python 3.8 or higher (3.11 recommended)
 - pip (Python package manager)
 
 ### Installation
@@ -53,24 +66,45 @@ The app will open in your browser at `http://localhost:8501`
 
 > ⚠️ **Important:** Change these credentials in `data/users.csv` for production use
 
-## 📖 Usage
+## 📖 Usage Guide
 
-### Login Page
-- Enter your credentials to access the dashboard
-- Check "Remember me" to stay logged in
-- Click "Sign in with SSO" for alternative authentication (coming soon)
+### 🏠 Home Page
+- **Public Access**: View statistics and public ideas without login
+- **Statistics Cards**: Total ideas, acceptance rate, review status, categories
+- **Category Distribution**: Visual breakdown with percentages
+- **Recent Activity**: 5 most recent published ideas
+- **Filters**: Search by name/description, date range, category
 
-### Dashboard
-- **Navigation Bar** - Switch between Home, Ideas, and My Ideas sections
-- **User Menu** - Located in the top-right corner
-  - Click your profile icon to see user info
-  - Use Settings for account configuration
-  - Click Logout to exit the application
+### 💡 Ideas Page
+- Browse all submitted ideas (authenticated users only)
+- Advanced filtering and sorting
+- Edit and delete functionality
+- Select ideas with checkboxes
 
-### Pages
-- **Home** - Main dashboard overview
-- **Ideas** - Browse and explore submitted ideas
-- **My Ideas** - View and manage your own ideas
+### 📝 My Ideas Page
+- View only your submitted ideas
+- Filter by status (On Review, Accepted, Rejected)
+- Edit drafts before publishing
+- Publish or delete your ideas
+- Track submission history
+
+### ➕ New Idea Page
+- **Required Fields**:
+- Title
+- Category
+- Short Description (max 200 chars)
+- Detailed Description
+- Estimated Impact / Target Audience
+- **Actions**:
+- Save as Draft (partial completion allowed)
+- Publish (requires all fields + terms acceptance)
+- **Visibility**: Public or Private
+
+### ✏️ Edit Idea Page
+- Modify existing ideas
+- Auto-saves to CSV
+- Returns to "My Ideas" after saving
+
 
 ## 🎨 Customization
 
@@ -96,19 +130,22 @@ user1,password123
 
 ## 🔧 Architecture
 
-The application follows a modular architecture:
+The application follows a modern script-based architecture:
 
-1. **streamlit_app.py** - Main router that handles authentication and page routing
-2. **pages/** - Individual page modules that manage their own content
-3. **styles/** - Centralized CSS management for consistent styling
-4. **data/** - User database and application data
+1. **streamlit_app.py** - Main entry point, loads data from CSV and routes based on authentication
+2. **pages/** - Individual page modules (dashboard, myideas, publish_idea, edit_idea, login)
+3. **pages/header.py** - Shared navigation header with st.page_link()
+4. **styles/** - Centralized CSS management for consistent styling
+5. **data/** - CSV storage for ideas, users, and login attempts
+6. **generate_initial_data.py** - Script to populate initial idea data
 
 ## 🛠️ Technologies Used
 
-- **Streamlit** - Web application framework
+- **Streamlit 1.29+** - Web application framework
 - **Pandas** - Data manipulation and CSV handling
+- **streamlit-aggrid** - Interactive data tables with selection
 - **Python 3.8+** - Core language
-- **HTML/CSS** - Styling and layout
+- **HTML/CSS** - Custom styling and layout
 
 ## 📞 Support
 
@@ -127,31 +164,39 @@ This project is licensed under the MIT License.
 
 ```
 Agile-dashboard/
-├── .streamlit/
-│   └── config.toml
-├── styles/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── login.py
-│   ├── dashboard.py
-│   └── header.py
-├── pages/
-│   ├── __init__.py
-│   ├── login.py
-│   ├── dashboard.py
-│   └── header.py
-├── elements/
-│   ├── upm_logo.png
-│   ├── Right Side.png
-│   ├── Headline.png
-│   ├── Email Form.png
-│   ├── Password Form.png
-│   ├── Sign in Button.png
-│   ├── Sign in Button Google.png
-│   └── SignupforFree.png
-├── data/
-│   └── users.csv
-├── streamlit_app.py
-├── README.md
-└── .gitignore
+├── streamlit_app.py # Main entry point & routing
+├── generate_initial_data.py # Initial data population script
+├── README.md # This file
+├── requirements.txt # Python dependencies
+├── .gitignore # Git ignore rules
+│
+├── pages/ # Application pages
+│ ├── login.py # Authentication page
+│ ├── home.py # Landing page with statistics
+│ ├── dashboard.py # Ideas management (all ideas)
+│ ├── myideas.py # User's personal ideas
+│ ├── publish_idea.py # Create new idea form
+│ ├── edit_idea.py # Edit existing idea
+│ ├── header.py # Shared navigation header
+│ └── [other pages] # Additional features
+│
+├── styles/ # CSS styling modules
+│ ├── init.py
+│ ├── main.py # Global styles
+│ ├── login.py # Login page styles
+│ ├── dashboard.py # Dashboard styles
+│ ├── header.py # Navigation styles
+│ ├── edit_idea.py # Form styles
+│ └── home.py # Home page styles
+│
+├── data/ # Data storage (CSV files)
+│ ├── ideas.csv # All ideas database
+│ ├── users.csv # User credentials
+│ └── login_attempts.csv # Failed login tracking
+│
+└── elements/ # Static assets
+├── upm_logo.png # University logo
+├── Right Side.png # Login illustration
+├── loginRateLimit.png # Rate limit popup
+└── loginAccDeleted.png # Account deleted popup
 ```

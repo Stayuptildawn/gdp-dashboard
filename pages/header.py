@@ -10,6 +10,7 @@ def show_header(active_page=None):
     username = st.session_state.get("username", "User")
     logo_path = "elements/upm_logo.png"
     is_authenticated = st.session_state.get("authenticated", False)
+    role = st.session_state.get("role", None)  # admin / investor / student / None
 
     # ===== White header card =====
     st.markdown('<div class="app-header">', unsafe_allow_html=True)
@@ -19,13 +20,13 @@ def show_header(active_page=None):
         lc, rc = st.columns([0.10, 0.90])
         with lc:
             if os.path.exists(logo_path):
-                # Use HTML for better size control
                 import base64
                 with open(logo_path, "rb") as f:
                     logo_b64 = base64.b64encode(f.read()).decode()
                 st.markdown(
-                    f'<img src="data:image/png;base64,{logo_b64}" style="width: 100%; max-width: 70px; height: auto; margin-top: 8px;">',
-                    unsafe_allow_html=True
+                    f'<img src="data:image/png;base64,{logo_b64}" '
+                    f'style="width: 100%; max-width: 70px; height: auto; margin-top: 8px;">',
+                    unsafe_allow_html=True,
                 )
         with rc:
             st.markdown(
@@ -49,7 +50,7 @@ def show_header(active_page=None):
                     </div>
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
             sc1, sc2 = st.columns(2)
             with sc1:
@@ -59,40 +60,55 @@ def show_header(active_page=None):
                 if st.button("Logout", key="header_logout", width="stretch"):
                     st.session_state.authenticated = False
                     st.session_state.username = None
+                    st.session_state.role = None
                     st.switch_page("streamlit_app.py")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ===== Blue navbar - conditional based on authentication =====
+    # ===== Blue navbar - conditional based on authentication & role =====
     if is_authenticated:
-        NAV_ITEMS = [
+        # Always available when logged in
+        nav_items = [
             {"label": "Ideas", "page": "pages/dashboard.py", "icon": "💡"},
-            {"label": "My Ideas", "page": "pages/myideas.py", "icon": "📝"},
-            {"label": "New Idea", "page": "pages/publish_idea.py", "icon": "➕"},
-            {"label": "Experiments", "page": "pages/experiments.py", "icon": "🔬"},
-            {"label": "Sprints", "page": "pages/sprints.py", "icon": "⚡"},
-            {"label": "Team", "page": "pages/team.py", "icon": "👥"},
-            {"label": "Reports/Analytics", "page": "pages/reports.py", "icon": "📊"},
-            {"label": "Profile", "page": "pages/profile.py", "icon": "👤"},
-            {"label": "Messages", "page": "pages/messages.py", "icon": "💬"}
         ]
+
+        # Only for admin + investor (students should not see My Ideas / New Idea)
+        if role in ["admin", "investor"]:
+            nav_items.extend(
+                [
+                    {"label": "My Ideas", "page": "pages/myideas.py", "icon": "📝"},
+                    {"label": "New Idea", "page": "pages/publish_idea.py", "icon": "➕"},
+                ]
+            )
+
+        # Extra pages – same for all authenticated roles
+        nav_items.extend(
+            [
+                {"label": "Experiments", "page": "pages/experiments.py", "icon": "🔬"},
+                {"label": "Sprints", "page": "pages/sprints.py", "icon": "⚡"},
+                {"label": "Team", "page": "pages/team.py", "icon": "👥"},
+                {"label": "Reports/Analytics", "page": "pages/reports.py", "icon": "📊"},
+                {"label": "Profile", "page": "pages/profile.py", "icon": "👤"},
+                {"label": "Messages", "page": "pages/messages.py", "icon": "💬"},
+            ]
+        )
     else:
-        NAV_ITEMS = [
-            {"label": "Login", "page": "pages/login.py", "icon": "🔐"}
+        nav_items = [
+            {"label": "Login", "page": "pages/login.py", "icon": "🔐"},
         ]
 
     st.markdown('<div class="navbar">', unsafe_allow_html=True)
-    
-    cols = st.columns(len(NAV_ITEMS))
-    for idx, (col, item) in enumerate(zip(cols, NAV_ITEMS)):
+
+    cols = st.columns(len(nav_items))
+    for col, item in zip(cols, nav_items):
         with col:
             st.page_link(
-                item["page"], 
+                item["page"],
                 label=item["label"],
                 icon=item["icon"],
-                width="stretch"
+                width="stretch",
             )
-    
+
     st.markdown("</div>", unsafe_allow_html=True)
 
     return active_page

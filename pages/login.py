@@ -1,4 +1,13 @@
 import streamlit as st
+
+# IMPORTANT: Must be first Streamlit command
+st.set_page_config(
+    page_title="UPM Innovation Platform - Login",
+    page_icon="💡",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
 import pandas as pd
 import os
 from datetime import datetime, timedelta
@@ -199,12 +208,12 @@ with col1:
     
     # Main sign in button
     st.markdown('<div class="button-group">', unsafe_allow_html=True)
-    login = st.button("Sign in", key="login_btn", type="primary", use_container_width=True)
+    login = st.button("Sign in", key="login_btn", type="primary", width="stretch")
     st.markdown('</div>', unsafe_allow_html=True)
     
     # SSO option
     st.markdown('<div class="button-group">', unsafe_allow_html=True)
-    sso = st.button("Sign in with SSO", key="sso_btn", use_container_width=True)
+    sso = st.button("Sign in with SSO", key="sso_btn", width="stretch")
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Sign up link at the bottom
@@ -269,8 +278,8 @@ if login:
                         st.session_state.show_acc_deleted_modal = False
                         # Wipe their failed attempts since they got in
                         clear_login_attempts(email)
-                        # Redirect to the Ideas page (dashboard)
-                        st.switch_page("pages/dashboard.py")
+                        # Redirect to home page
+                        st.switch_page("pages/home.py")
                     else:
                         # Wrong password - log this failed attempt
                         add_failed_attempt(email)

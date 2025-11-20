@@ -53,10 +53,10 @@ def show_header(active_page=None):
             )
             sc1, sc2 = st.columns(2)
             with sc1:
-                if st.button("Settings", key="header_settings", use_container_width=True):
+                if st.button("Settings", key="header_settings", width="stretch"):
                     st.switch_page("pages/profile.py")
             with sc2:
-                if st.button("Logout", key="header_logout", use_container_width=True):
+                if st.button("Logout", key="header_logout", width="stretch"):
                     st.session_state.authenticated = False
                     st.session_state.username = None
                     st.switch_page("streamlit_app.py")
@@ -90,7 +90,7 @@ def show_header(active_page=None):
                 item["page"], 
                 label=item["label"],
                 icon=item["icon"],
-                use_container_width=True
+                width="stretch"
             )
     
     st.markdown("</div>", unsafe_allow_html=True)

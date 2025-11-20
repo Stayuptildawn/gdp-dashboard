@@ -1,8 +1,32 @@
 import streamlit as st
+
+# IMPORTANT: Must be first Streamlit command
+st.set_page_config(
+    page_title="UPM Innovation Platform - Ideas",
+    page_icon="💡",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+import pandas as pd
+import os
 from pages import header
 from styles import dashboard as dashboard_styles
-import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder
+
+# Reload data from CSV to ensure it's current
+csv_path = "data/ideas.csv"
+if os.path.exists(csv_path):
+    try:
+        df_reload = pd.read_csv(csv_path)
+        for col in ["From date", "To date", "Date published"]:
+            if col in df_reload.columns:
+                df_reload[col] = pd.to_datetime(df_reload[col], errors='coerce')
+        if "id" in df_reload.columns:
+            df_reload = df_reload.sort_values('id', ascending=False).reset_index(drop=True)
+        st.session_state.home_docs = df_reload
+    except Exception as e:
+        st.error(f"Error reloading data: {e}")
 
 
 def get_selected_id(sel):
@@ -34,9 +58,6 @@ if "home_docs" not in st.session_state:
 
 # Get base dataframe
 df = st.session_state.home_docs.copy()
-
-# Debug: Show how many ideas we have
-st.write(f"Total ideas loaded: {len(df)}")
 
 # Ensure datetime columns
 for c in ["From date", "To date", "Date published"]:
@@ -78,9 +99,6 @@ if search:
 df = df[m].reset_index(drop=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
-
-# Debug: Show filtered count
-st.write(f"Ideas after filters: {len(df)}")
 
 if len(df) == 0:
     st.info("No ideas match your filters. Try adjusting your search criteria.")
@@ -163,9 +181,15 @@ with c2:
         st.switch_page("pages/edit_idea.py")
 with c3:
     if st.button("🗑 Delete", disabled=selected_id is None):
-        # Delete the idea from session state
+        # Delete the idea from session state and CSV
         df_main = st.session_state.home_docs
         df_main = df_main[df_main["id"] != selected_id]
         st.session_state.home_docs = df_main.reset_index(drop=True)
+        
+        # Save to CSV
+        csv_path = "data/ideas.csv"
+        os.makedirs("data", exist_ok=True)
+        df_main.to_csv(csv_path, index=False)
+        
         st.success("Idea deleted successfully!")
         st.rerun()

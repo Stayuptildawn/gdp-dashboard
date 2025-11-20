@@ -1,7 +1,31 @@
 import streamlit as st
+
+# IMPORTANT: Must be first Streamlit command
+st.set_page_config(
+    page_title="UPM Innovation Platform - My Ideas",
+    page_icon="💡",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
 import pandas as pd
+import os
 from pages import header
 from st_aggrid import AgGrid, GridOptionsBuilder
+
+# Reload data from CSV to ensure it's current
+csv_path = "data/ideas.csv"
+if os.path.exists(csv_path):
+    try:
+        df_reload = pd.read_csv(csv_path)
+        for col in ["From date", "To date", "Date published"]:
+            if col in df_reload.columns:
+                df_reload[col] = pd.to_datetime(df_reload[col], errors='coerce')
+        if "id" in df_reload.columns:
+            df_reload = df_reload.sort_values('id', ascending=False).reset_index(drop=True)
+        st.session_state.home_docs = df_reload
+    except Exception as e:
+        st.error(f"Error reloading data: {e}")
 
 
 def get_selected_id(sel):
@@ -33,10 +57,6 @@ if "home_docs" not in st.session_state or st.session_state.home_docs is None:
 username = st.session_state.username
 df = st.session_state.home_docs.copy()
 
-# Debug: Show total ideas and username
-st.write(f"Logged in as: {username}")
-st.write(f"Total ideas in system: {len(df)}")
-
 # If your owner column has a different name, change "Owner" below
 if "Owner" not in df.columns:
     st.warning(
@@ -48,8 +68,6 @@ if "Owner" not in df.columns:
 else:
     # Filter rows where the Owner matches the current user
     my_ideas = df[df["Owner"] == username].copy()
-    # Debug: Show how many ideas belong to this user
-    st.write(f"Your ideas: {len(my_ideas)}")
 
 # Flash message from edit
 flash_msg = st.session_state.pop("flash_success", None)
@@ -149,11 +167,11 @@ grid_opts["paginationPageSize"] = 10
 grid_opts["suppressRowClickSelection"] = True
 grid_opts["rowSelection"] = "single"
 
-# Render AgGrid - FIXED: removed update_mode
+# Render AgGrid
 resp = AgGrid(
     display_df,
     gridOptions=grid_opts,
-    update_on=['selectionChanged'],  # Changed from update_mode
+    update_on=['selectionChanged'],
     allow_unsafe_jscode=True,
     fit_columns_on_grid_load=True,
     height=420,
@@ -177,6 +195,12 @@ with c2:
         if len(idx) > 0:
             df_main.at[idx[0], "Status"] = "Accepted"
             st.session_state.home_docs = df_main
+            
+            # Save to CSV
+            csv_path = "data/ideas.csv"
+            os.makedirs("data", exist_ok=True)
+            df_main.to_csv(csv_path, index=False)
+            
             st.success("Idea published successfully!")
             st.rerun()
 with c3:
@@ -185,5 +209,11 @@ with c3:
         df_main = st.session_state.home_docs
         df_main = df_main[df_main["id"] != selected_id]
         st.session_state.home_docs = df_main.reset_index(drop=True)
+        
+        # Save to CSV
+        csv_path = "data/ideas.csv"
+        os.makedirs("data", exist_ok=True)
+        df_main.to_csv(csv_path, index=False)
+        
         st.success("Idea deleted successfully!")
         st.rerun()

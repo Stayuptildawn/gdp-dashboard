@@ -206,7 +206,7 @@ with c2:
 
     # --- Save as Draft button --- #
     with sc1:
-        if st.button("Save as Draft", disabled=st.session_state.is_publishing, use_container_width=True):
+        if st.button("Save as Draft", disabled=st.session_state.is_publishing, width="stretch"):
             # For drafts, only require a title to avoid friction
             if not (title or "").strip():
                 st.warning("⚠️ Please provide at least an Idea Title to save as draft.")
@@ -260,7 +260,7 @@ with c2:
 
     # --- Publish button --- #
     with sc2:
-        if st.button("Publish", type="primary", disabled=st.session_state.is_publishing, use_container_width=True):
+        if st.button("Publish", type="primary", disabled=st.session_state.is_publishing, width="stretch"):
             # Simple flag to reduce the chance of double-click publishing
             st.session_state.is_publishing = True
 

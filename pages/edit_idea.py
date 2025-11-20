@@ -178,11 +178,11 @@ with c2:
     }
     
     with sc1:
-        if st.button("Save as Draft", use_container_width=True):
+        if st.button("Save as Draft", width="stretch"):
             _persist_changes(form, status="On Review", set_date=True)
     
     with sc2:
-        if st.button("Submit", type="primary", use_container_width=True):
+        if st.button("Submit", type="primary", width="stretch"):
             # Check if all the required fields are filled in
             required_ok = all([
                 (title or "").strip(),
@@ -204,6 +204,6 @@ with c2:
     st.info("💡 Once submitted, your idea will be visible to everyone. Don't worry - you can edit it anytime from 'My Ideas'.")
 
 # Cancel button at the bottom
-if st.button("← Cancel", use_container_width=False):
+if st.button("← Cancel", width=False):
     st.session_state.pop("edit_id", None)
     st.switch_page("pages/myideas.py")

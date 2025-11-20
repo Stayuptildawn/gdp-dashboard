@@ -9,16 +9,24 @@ def show_header(active_page=None):
 
     username = st.session_state.get("username", "User")
     logo_path = "elements/upm_logo.png"
+    is_authenticated = st.session_state.get("authenticated", False)
 
     # ===== White header card =====
     st.markdown('<div class="app-header">', unsafe_allow_html=True)
     c1, c2 = st.columns([0.75, 0.25])
 
     with c1:
-        lc, rc = st.columns([0.12, 0.88])
+        lc, rc = st.columns([0.10, 0.90])
         with lc:
             if os.path.exists(logo_path):
-                st.image(logo_path, width=48)
+                # Use HTML for better size control
+                import base64
+                with open(logo_path, "rb") as f:
+                    logo_b64 = base64.b64encode(f.read()).decode()
+                st.markdown(
+                    f'<img src="data:image/png;base64,{logo_b64}" style="width: 100%; max-width: 70px; height: auto; margin-top: 8px;">',
+                    unsafe_allow_html=True
+                )
         with rc:
             st.markdown(
                 """
@@ -31,53 +39,60 @@ def show_header(active_page=None):
             )
 
     with c2:
-        uc1, uc2 = st.columns([0.35, 0.65])
-        with uc1:
-            st.markdown('<div class="user-icon">👤</div>', unsafe_allow_html=True)
-        with uc2:
+        if is_authenticated:
             st.markdown(
-                f'<div class="user-name">Hello, {username}</div>',
-                unsafe_allow_html=True,
+                f"""
+                <div style="display: flex; align-items: center; padding: 1rem 0; gap: 0.75rem;">
+                    <div style="font-size: 2rem;">👤</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.9rem; color: #374151; font-weight: 500;">Hello, {username}</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
-            if st.button("Settings", key="header_settings"):
-                st.query_params["page"] = "Profile"
-                st.rerun()
-            if st.button("Logout", key="header_logout"):
-                st.session_state.authenticated = False
-                st.session_state.username = None
-                st.query_params.clear()
-                st.rerun()
+            sc1, sc2 = st.columns(2)
+            with sc1:
+                if st.button("Settings", key="header_settings", use_container_width=True):
+                    st.switch_page("pages/profile.py")
+            with sc2:
+                if st.button("Logout", key="header_logout", use_container_width=True):
+                    st.session_state.authenticated = False
+                    st.session_state.username = None
+                    st.switch_page("streamlit_app.py")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ===== Blue navbar (single flex row, no wrapping) =====
-    NAV_ITEMS = [
-        "Home",
-        "Ideas",
-        "My Ideas",
-        "New Idea",          # <- add this
-        "Experiments",
-        "Sprints",
-        "Team",
-        "Reports/Analytics",
-        "Profile",
-        "Messages"
-    ]
+    # ===== Blue navbar - conditional based on authentication =====
+    if is_authenticated:
+        NAV_ITEMS = [
+            {"label": "Ideas", "page": "pages/dashboard.py", "icon": "💡"},
+            {"label": "My Ideas", "page": "pages/myideas.py", "icon": "📝"},
+            {"label": "New Idea", "page": "pages/publish_idea.py", "icon": "➕"},
+            {"label": "Experiments", "page": "pages/experiments.py", "icon": "🔬"},
+            {"label": "Sprints", "page": "pages/sprints.py", "icon": "⚡"},
+            {"label": "Team", "page": "pages/team.py", "icon": "👥"},
+            {"label": "Reports/Analytics", "page": "pages/reports.py", "icon": "📊"},
+            {"label": "Profile", "page": "pages/profile.py", "icon": "👤"},
+            {"label": "Messages", "page": "pages/messages.py", "icon": "💬"}
+        ]
+    else:
+        NAV_ITEMS = [
+            {"label": "Login", "page": "pages/login.py", "icon": "🔐"}
+        ]
 
-    # Use provided active_page if set, else use query param
-    active = active_page if active_page is not None else st.query_params.get("page", "Home")
+    st.markdown('<div class="navbar">', unsafe_allow_html=True)
+    
+    cols = st.columns(len(NAV_ITEMS))
+    for idx, (col, item) in enumerate(zip(cols, NAV_ITEMS)):
+        with col:
+            st.page_link(
+                item["page"], 
+                label=item["label"],
+                icon=item["icon"],
+                use_container_width=True
+            )
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    links = []
-    for i, name in enumerate(NAV_ITEMS):
-        href = f"?page={name.replace(' ', '%20')}"
-        cls = "navlink active" if name == active else "navlink"
-        links.append(f'<a class="{cls}" href="{href}">{name}</a>')
-        if i < len(NAV_ITEMS) - 1:
-            links.append('<span class="sep">|</span>')
-
-    st.markdown(
-        f'<div class="navbar">{" ".join(links)}</div>',
-        unsafe_allow_html=True,
-    )
-
-    return active
+    return active_page

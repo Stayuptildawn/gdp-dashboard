@@ -1,60 +1,189 @@
-
 import streamlit as st
 import pandas as pd
+from pages import header
+from st_aggrid import AgGrid, GridOptionsBuilder
 
-def show():
-    """
-    Shows the 'My Ideas' page, filtered so each user only sees their own ideas.
-    Assumes:
-      - st.session_state.username is set after login
-      - st.session_state.home_docs is a DataFrame with at least:
-            ['id', 'Name', 'Category', 'Status', 'Estimated Impact / Target Audience', 'Owner']
-    """
 
-    # Defensive checks so the page fails in a friendly way
-    if "username" not in st.session_state or not st.session_state.username:
-        st.error("You need to be logged in to see your ideas.")
-        return
+def get_selected_id(sel):
+    """Extract the selected ID from AgGrid selection"""
+    if isinstance(sel, list):
+        return sel[0]["id"] if len(sel) > 0 else None
+    try:
+        if isinstance(sel, pd.DataFrame):
+            return sel.iloc[0]["id"] if not sel.empty else None
+    except Exception:
+        pass
+    return None
 
-    if "home_docs" not in st.session_state or st.session_state.home_docs is None:
-        st.error("There is no idea data available in this session yet.")
-        return
 
-    username = st.session_state.username
-    df = st.session_state.home_docs
+# Show the header navigation with "My Ideas" as active page
+header.show_header("My Ideas")
 
-    # If your owner column has a different name, change "Owner" below
-    if "Owner" not in df.columns:
-        st.warning(
-            "The ideas table does not have an 'Owner' column yet, "
-            "so 'My Ideas' cannot be filtered by user."
-        )
-        st.dataframe(df, use_container_width=True)
-        return
+st.title("My Ideas")
 
+# Defensive checks so the page fails in a friendly way
+if "username" not in st.session_state or not st.session_state.username:
+    st.error("You need to be logged in to see your ideas.")
+    st.stop()
+
+if "home_docs" not in st.session_state or st.session_state.home_docs is None:
+    st.error("There is no idea data available in this session yet.")
+    st.stop()
+
+username = st.session_state.username
+df = st.session_state.home_docs.copy()
+
+# Debug: Show total ideas and username
+st.write(f"Logged in as: {username}")
+st.write(f"Total ideas in system: {len(df)}")
+
+# If your owner column has a different name, change "Owner" below
+if "Owner" not in df.columns:
+    st.warning(
+        "The ideas table does not have an 'Owner' column yet, "
+        "so 'My Ideas' cannot be filtered by user. Showing all ideas for now."
+    )
+    # Show all ideas if no Owner column exists
+    my_ideas = df.copy()
+else:
     # Filter rows where the Owner matches the current user
     my_ideas = df[df["Owner"] == username].copy()
+    # Debug: Show how many ideas belong to this user
+    st.write(f"Your ideas: {len(my_ideas)}")
 
-    st.title("My Ideas")
+# Flash message from edit
+flash_msg = st.session_state.pop("flash_success", None)
+if flash_msg:
+    st.success(flash_msg)
 
-    if my_ideas.empty:
-        st.info("You have not submitted any ideas yet. Try publishing a new one from the Ideas section.")
-        return
+if my_ideas.empty:
+    st.info("📝 You have not submitted any ideas yet. Click 'New Idea' in the navigation to create your first idea!")
+    st.stop()
 
-    # Pick the columns you want to show in the table
-    display_cols = [
-        "id",
-        "Name",
-        "Category",
-        "Status",
-        "Estimated Impact / Target Audience",
-        "From date",
-        "To date",
-    ]
-    existing_cols = [c for c in display_cols if c in my_ideas.columns]
+# Ensure datetime columns
+for c in ["From date", "To date", "Date published"]:
+    if c in my_ideas.columns:
+        my_ideas[c] = pd.to_datetime(my_ideas[c], errors='coerce')
 
-    # Nicely formatted table of only this user’s ideas
-    st.dataframe(
-        my_ideas[existing_cols].sort_values(by="From date", ascending=False),
-        use_container_width=True,
+# Filters row
+col_search, col_status = st.columns([3, 1.5])
+
+with col_search:
+    search = st.text_input("Search my ideas", key="myideas_search")
+with col_status:
+    status_options = ["All"]
+    if "Status" in my_ideas.columns:
+        status_options += sorted(my_ideas["Status"].dropna().unique().tolist())
+    status_filter = st.selectbox("Status", options=status_options, index=0, key="myideas_status")
+
+# Apply filters - FIXED: Create mask after my_ideas is filtered by owner
+m = pd.Series([True] * len(my_ideas), index=my_ideas.index)  # Match the index
+if status_filter and status_filter != "All":
+    m &= (my_ideas["Status"] == status_filter)
+if search:
+    ql = search.lower()
+    m &= (
+        my_ideas["Name"].str.lower().str.contains(ql, na=False) |
+        my_ideas["Description"].str.lower().str.contains(ql, na=False)
     )
+
+# Apply the mask
+my_ideas = my_ideas[m].reset_index(drop=True)
+
+if len(my_ideas) == 0:
+    st.info("No ideas match your filters.")
+    st.stop()
+
+# Prepare display dataframe
+display_df = pd.DataFrame()
+if "id" in my_ideas.columns:
+    display_df["id"] = my_ideas["id"]
+if "Name" in my_ideas.columns:
+    display_df["Title"] = my_ideas["Name"]
+if "Date published" in my_ideas.columns:
+    display_df["Date published"] = my_ideas["Date published"].dt.strftime("%Y-%m-%d")
+if "Status" in my_ideas.columns:
+    display_df["Status"] = my_ideas["Status"]
+if "Category" in my_ideas.columns:
+    display_df["Category"] = my_ideas["Category"]
+if "Description" in my_ideas.columns:
+    display_df["Short Description"] = my_ideas["Description"]
+
+# AgGrid configuration
+gb = GridOptionsBuilder.from_dataframe(display_df)
+
+# Hide ID column but keep for selection
+if "id" in display_df.columns:
+    gb.configure_column("id", hide=True)
+
+# Make Short Description wider
+if "Short Description" in display_df.columns:
+    gb.configure_column("Short Description", width=800)
+
+# Configure sortable columns with checkbox
+if "Title" in display_df.columns:
+    gb.configure_column(
+        field="Title",
+        sortable=True,
+        suppressMenu=True,
+        checkboxSelection=True
+    )
+if "Date published" in display_df.columns:
+    gb.configure_column(
+        field="Date published",
+        sortable=True,
+        suppressMenu=True
+    )
+
+# Selection configuration
+gb.configure_selection(
+    selection_mode='single',
+    use_checkbox=True
+)
+
+# Build grid options
+grid_opts = gb.build()
+grid_opts["domLayout"] = "normal"
+grid_opts["pagination"] = True
+grid_opts["paginationPageSize"] = 10
+grid_opts["suppressRowClickSelection"] = True
+grid_opts["rowSelection"] = "single"
+
+# Render AgGrid - FIXED: removed update_mode
+resp = AgGrid(
+    display_df,
+    gridOptions=grid_opts,
+    update_on=['selectionChanged'],  # Changed from update_mode
+    allow_unsafe_jscode=True,
+    fit_columns_on_grid_load=True,
+    height=420,
+    theme="balham"
+)
+
+# Action buttons
+sel = resp.get("selected_rows", [])
+selected_id = get_selected_id(sel)
+
+c1, c2, c3 = st.columns([1, 1, 1])
+with c1:
+    if st.button("✏️ Edit selected", disabled=selected_id is None):
+        st.session_state.edit_id = selected_id
+        st.switch_page("pages/edit_idea.py")
+with c2:
+    if st.button("📤 Publish", disabled=selected_id is None):
+        # Update status to "Accepted"
+        df_main = st.session_state.home_docs
+        idx = df_main.index[df_main["id"] == selected_id]
+        if len(idx) > 0:
+            df_main.at[idx[0], "Status"] = "Accepted"
+            st.session_state.home_docs = df_main
+            st.success("Idea published successfully!")
+            st.rerun()
+with c3:
+    if st.button("🗑 Delete", disabled=selected_id is None):
+        # Delete the idea
+        df_main = st.session_state.home_docs
+        df_main = df_main[df_main["id"] != selected_id]
+        st.session_state.home_docs = df_main.reset_index(drop=True)
+        st.success("Idea deleted successfully!")
+        st.rerun()

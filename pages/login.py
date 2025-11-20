@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from styles import login as login_styles
 
 
-
 def show_popup_modal(image_path, modal_key="error_modal"):
     """Shows a popup modal with an image - closes when you click outside it"""
     if st.session_state.get(modal_key, False):
@@ -40,11 +39,9 @@ def show_popup_modal(image_path, modal_key="error_modal"):
             st.rerun()
 
 
-
 def get_login_attempts_file():
     """Returns the path where we store login attempt data"""
     return "data/login_attempts.csv"
-
 
 
 def load_login_attempts():
@@ -62,12 +59,10 @@ def load_login_attempts():
     return pd.DataFrame(columns=['username', 'timestamp'])
 
 
-
 def save_login_attempts(df):
     """Save the login attempts back to the CSV file"""
     attempts_file = get_login_attempts_file()
     df.to_csv(attempts_file, index=False)
-
 
 
 def check_rate_limit(username):
@@ -98,7 +93,6 @@ def check_rate_limit(username):
     return False
 
 
-
 def add_failed_attempt(username):
     """Log a failed login attempt to the CSV"""
     df_attempts = load_login_attempts()
@@ -115,7 +109,6 @@ def add_failed_attempt(username):
     save_login_attempts(df_attempts)
 
 
-
 def clear_login_attempts(username):
     """Wipe out all failed attempts for a user (they logged in successfully)"""
     df_attempts = load_login_attempts()
@@ -127,137 +120,131 @@ def clear_login_attempts(username):
     save_login_attempts(df_attempts)
 
 
+# Main page execution (no function wrapper)
+# Load the styling for the login page
+login_styles.load_css()
 
-def show():
-    """Display the login page"""
+# Make sure these folders exist before we try to use them
+os.makedirs("elements", exist_ok=True)
+os.makedirs("data", exist_ok=True)
+
+# Load up the user database from CSV
+user_db_path = "data/users.csv"
+if not os.path.exists(user_db_path):
+    df = pd.DataFrame([{"username": "admin", "password": "aA1234", "status": "active"}])
+    df.to_csv(user_db_path, index=False)
+else:
+    df = pd.read_csv(user_db_path)
+
+# Show popups if we've triggered them
+if st.session_state.get('show_rate_limit_modal', False):
+    show_popup_modal("elements/loginRateLimit.png", "show_rate_limit_modal")
+
+if st.session_state.get('show_acc_deleted_modal', False):
+    show_popup_modal("elements/loginAccDeleted.png", "show_acc_deleted_modal")
+
+# Split the page into two columns
+col1, col2 = st.columns([1, 1], gap="large")
+
+with col1:
+    # Big welcome message at the top
+    st.markdown("""
+    <div class="login-header">
+        <h1 style="font-size: 2.8rem; font-weight: 800; color: #1a1a1a; margin: 0; margin-bottom: 0.3rem;">WELCOME</h1>
+        <p style="font-size: 0.95rem; color: #6b7280; margin-bottom: 1.5rem; margin-top: 0;">Please enter your details.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Load the styling for the login page
-    login_styles.load_css()
+    # Email input field
+    st.markdown('<div class="input-group">', unsafe_allow_html=True)
+    st.markdown("<label class='input-label'>Email</label>", unsafe_allow_html=True)
+    email = st.text_input("Email", key="email_form", label_visibility="collapsed", placeholder="Enter your email")
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Make sure these folders exist before we try to use them
-    os.makedirs("elements", exist_ok=True)
-    os.makedirs("data", exist_ok=True)
+    if not email and st.session_state.get('login_warning'):
+        st.markdown(f'<div class="warning-message">{st.session_state.login_warning}</div>', unsafe_allow_html=True)
+    elif st.session_state.get('login_error'):
+        st.markdown(f'<div class="error-message">{st.session_state.login_error}</div>', unsafe_allow_html=True)
+
+    # Password input field
+    st.markdown('<div class="input-group">', unsafe_allow_html=True)
+    st.markdown("<label class='input-label'>Password</label>", unsafe_allow_html=True)
+    password = st.text_input("Password", key="password_form", label_visibility="collapsed", type="password", placeholder="Enter your password")
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Load up the user database from CSV
-    user_db_path = "data/users.csv"
-    if not os.path.exists(user_db_path):
-        df = pd.DataFrame([{"username": "admin", "password": "aA1234", "status": "active"}])
-        df.to_csv(user_db_path, index=False)
-    else:
-        df = pd.read_csv(user_db_path)
-    
-    # Show popups if we've triggered them
-    if st.session_state.get('show_rate_limit_modal', False):
-        show_popup_modal("elements/loginRateLimit.png", "show_rate_limit_modal")
-    
-    if st.session_state.get('show_acc_deleted_modal', False):
-        show_popup_modal("elements/loginAccDeleted.png", "show_acc_deleted_modal")
-    
-    # Split the page into two columns
-    col1, col2 = st.columns([1, 1], gap="large")
-    
-    with col1:
-        # Big welcome message at the top
+    if not password and st.session_state.get('login_warning'):
+        st.markdown(f'<div class="warning-message">{st.session_state.login_warning}</div>', unsafe_allow_html=True)
+        st.session_state.login_warning = ''
+    elif st.session_state.get('login_error'):
+        st.markdown(f'<div class="error-message">{st.session_state.login_error}</div>', unsafe_allow_html=True)
+        st.session_state.login_error = ''
+
+    # Remember me checkbox and forgot password link side by side
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
         st.markdown("""
-        <div class="login-header">
-            <h1 style="font-size: 2.8rem; font-weight: 800; color: #1a1a1a; margin: 0; margin-bottom: 0.3rem;">WELCOME</h1>
-            <p style="font-size: 0.95rem; color: #6b7280; margin-bottom: 1.5rem; margin-top: 0;">Please enter your details.</p>
+        <div style="margin: 0.8rem 0 1rem 0;">
+            <label style="display: flex; align-items: center; cursor: pointer; font-size: 0.9rem; color: #374151;">
+                <input type="checkbox" id="remember_me_check" style="margin-right: 0.5rem; cursor: pointer; width: 16px; height: 16px;">
+                <span>Remember me</span>
+            </label>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Email input field
-        st.markdown('<div class="input-group">', unsafe_allow_html=True)
-        st.markdown("<label class='input-label'>Email</label>", unsafe_allow_html=True)
-        email = st.text_input("Email", key="email_form", label_visibility="collapsed", placeholder="Enter your email")
+        remember_me = st.checkbox("Remember me", key="remember_me", label_visibility="collapsed")
+    with col_b:
+        st.markdown('<div class="forgot-link" style="text-align: right; margin-top: 0.8rem;">', unsafe_allow_html=True)
+        if st.button("Forgot password", key="forgot_btn"):
+            st.info("We're still working on the password reset feature - hang tight!")
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        if not email and st.session_state.get('login_warning'):
-            st.markdown(f'<div class="warning-message">{st.session_state.login_warning}</div>', unsafe_allow_html=True)
-        elif st.session_state.get('login_error'):
-            st.markdown(f'<div class="error-message">{st.session_state.login_error}</div>', unsafe_allow_html=True)
-
-
-        # Password input field
-        st.markdown('<div class="input-group">', unsafe_allow_html=True)
-        st.markdown("<label class='input-label'>Password</label>", unsafe_allow_html=True)
-        password = st.text_input("Password", key="password_form", label_visibility="collapsed", type="password", placeholder="Enter your password")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if not password and st.session_state.get('login_warning'):
-            st.markdown(f'<div class="warning-message">{st.session_state.login_warning}</div>', unsafe_allow_html=True)
-            st.session_state.login_warning = ''
-        elif st.session_state.get('login_error'):
-            st.markdown(f'<div class="error-message">{st.session_state.login_error}</div>', unsafe_allow_html=True)
-            st.session_state.login_error = ''
-
-
-        # Remember me checkbox and forgot password link side by side
-        col_a, col_b = st.columns([1, 1])
-        with col_a:
-            st.markdown("""
-            <div style="margin: 0.8rem 0 1rem 0;">
-                <label style="display: flex; align-items: center; cursor: pointer; font-size: 0.9rem; color: #374151;">
-                    <input type="checkbox" id="remember_me_check" style="margin-right: 0.5rem; cursor: pointer; width: 16px; height: 16px;">
-                    <span>Remember me</span>
-                </label>
-            </div>
-            """, unsafe_allow_html=True)
-            remember_me = st.checkbox("Remember me", key="remember_me", label_visibility="collapsed")
-        with col_b:
-            st.markdown('<div class="forgot-link" style="text-align: right; margin-top: 0.8rem;">', unsafe_allow_html=True)
-            if st.button("Forgot password", key="forgot_btn", width="content"):
-                st.info("We're still working on the password reset feature - hang tight!")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Main sign in button
-        st.markdown('<div class="button-group">', unsafe_allow_html=True)
-        login = st.button("Sign in", key="login_btn", width="stretch", type="primary")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # SSO option
-        st.markdown('<div class="button-group">', unsafe_allow_html=True)
-        sso = st.button("Sign in with SSO", key="sso_btn", width="stretch")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Sign up link at the bottom
-        st.markdown(
-            '<div class="signup-text">Don\'t have an account? <a href="#" class="signup-link">Sign up fo free!</a></div>',
-            unsafe_allow_html=True
-        )
     
-    with col2:
-        # Nice illustration on the right side
-        if os.path.exists("elements/Right Side.png"):
-            st.markdown('<div class="illustration-container">', unsafe_allow_html=True)
-            st.image("elements/Right Side.png")
-            st.markdown('</div>', unsafe_allow_html=True)
+    # Main sign in button
+    st.markdown('<div class="button-group">', unsafe_allow_html=True)
+    login = st.button("Sign in", key="login_btn", type="primary", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Set up session state variables if they don't exist yet
-    if 'login_error' not in st.session_state:
-        st.session_state.login_error = ''
-    if 'login_warning' not in st.session_state:
-        st.session_state.login_warning = ''
-    if 'show_rate_limit_modal' not in st.session_state:
-        st.session_state.show_rate_limit_modal = False
-    if 'show_acc_deleted_modal' not in st.session_state:
-        st.session_state.show_acc_deleted_modal = False
+    # SSO option
+    st.markdown('<div class="button-group">', unsafe_allow_html=True)
+    sso = st.button("Sign in with SSO", key="sso_btn", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Sign up link at the bottom
+    st.markdown(
+        '<div class="signup-text">Don\'t have an account? <a href="#" class="signup-link">Sign up for free!</a></div>',
+        unsafe_allow_html=True
+    )
 
+with col2:
+    # Nice illustration on the right side
+    if os.path.exists("elements/Right Side.png"):
+        st.markdown('<div class="illustration-container">', unsafe_allow_html=True)
+        st.image("elements/Right Side.png")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Handle the login button click
-    if login:
-        # Clear out any old error messages (but keep the modal states)
-        st.session_state.login_error = ''
-        st.session_state.login_warning = ''
-        
-        if email and password:
-            # First thing - check if they've been trying too much
-            if check_rate_limit(email):
-                # Show the rate limit popup if we haven't already
-                if not st.session_state.get('show_rate_limit_modal', False):
-                    st.session_state.show_rate_limit_modal = True
-                    st.rerun()
-                return  # Don't let them proceed - they're locked out
-            
+# Set up session state variables if they don't exist yet
+if 'login_error' not in st.session_state:
+    st.session_state.login_error = ''
+if 'login_warning' not in st.session_state:
+    st.session_state.login_warning = ''
+if 'show_rate_limit_modal' not in st.session_state:
+    st.session_state.show_rate_limit_modal = False
+if 'show_acc_deleted_modal' not in st.session_state:
+    st.session_state.show_acc_deleted_modal = False
+
+# Handle the login button click
+if login:
+    # Clear out any old error messages (but keep the modal states)
+    st.session_state.login_error = ''
+    st.session_state.login_warning = ''
+    
+    if email and password:
+        # First thing - check if they've been trying too much
+        if check_rate_limit(email):
+            # Show the rate limit popup if we haven't already
+            if not st.session_state.get('show_rate_limit_modal', False):
+                st.session_state.show_rate_limit_modal = True
+                st.rerun()
+            # Don't let them proceed - they're locked out
+        else:
             # See if this user exists in the database
             user_row = df[df["username"] == email]
             
@@ -270,28 +257,29 @@ def show():
                     if not st.session_state.get('show_acc_deleted_modal', False):
                         st.session_state.show_acc_deleted_modal = True
                         st.rerun()
-                    return  # Stop here - can't log in with a disabled account
-                
-                # Now check if the password matches
-                if user_row.iloc[0]['password'] == password:
-                    # They got it right! Log them in and clear everything
-                    st.session_state.authenticated = True
-                    st.session_state.username = email
-                    st.session_state.login_error = ''
-                    st.session_state.login_warning = ''
-                    st.session_state.show_rate_limit_modal = False
-                    st.session_state.show_acc_deleted_modal = False
-                    # Wipe their failed attempts since they got in
-                    clear_login_attempts(email)
                 else:
-                    # Wrong password - log this failed attempt
-                    add_failed_attempt(email)
-                    st.session_state.login_error = "That email or password doesn't look right"
+                    # Now check if the password matches
+                    if user_row.iloc[0]['password'] == password:
+                        # They got it right! Log them in and clear everything
+                        st.session_state.authenticated = True
+                        st.session_state.username = email
+                        st.session_state.login_error = ''
+                        st.session_state.login_warning = ''
+                        st.session_state.show_rate_limit_modal = False
+                        st.session_state.show_acc_deleted_modal = False
+                        # Wipe their failed attempts since they got in
+                        clear_login_attempts(email)
+                        # Redirect to the Ideas page (dashboard)
+                        st.switch_page("pages/dashboard.py")
+                    else:
+                        # Wrong password - log this failed attempt
+                        add_failed_attempt(email)
+                        st.session_state.login_error = "That email or password doesn't look right"
             else:
                 # No user found with that email - log it as failed
                 add_failed_attempt(email)
                 st.session_state.login_error = "That email or password doesn't look right"
-        else:
-            st.session_state.login_warning = "Please fill in both fields"
-        
-        st.rerun()
+    else:
+        st.session_state.login_warning = "Please fill in both fields"
+    
+    st.rerun()

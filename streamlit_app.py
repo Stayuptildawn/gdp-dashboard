@@ -1,17 +1,19 @@
 import streamlit as st
+import pandas as pd
+import os
 
 # Configure the main layout before anything else
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="UPM Innovation Platform",
+    page_icon="💡",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 from styles import load_global_css
-from pages import dashboard, login, home, edit_idea, publish_idea, myIdeas
-from pages import header
-from data.fake_docs import make_fake_docs
-
 
 # Load global CSS so all pages share the same base styling
 load_global_css()
-
 
 # --- Authentication-related session state ---
 if "authenticated" not in st.session_state:
@@ -21,65 +23,41 @@ if "authenticated" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = None
 
-
-# --- Shared data (ideas table) that multiple pages depend on ---
-# This avoids “no data in session” errors when a page loads first.
+# --- Load ideas from CSV only ---
 if "home_docs" not in st.session_state:
-    st.session_state.home_docs = make_fake_docs(30)
+    try:
+        csv_path = "data/ideas.csv"
+        
+        if os.path.exists(csv_path):
+            # Load ideas from CSV
+            df = pd.read_csv(csv_path)
+            
+            # Convert date columns to datetime
+            for col in ["From date", "To date", "Date published"]:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+            
+            # Sort by id descending so newest ideas appear first
+            df = df.sort_values('id', ascending=False).reset_index(drop=True)
+            
+            st.session_state.home_docs = df
+        else:
+            # No CSV file found - create empty dataframe with proper structure
+            st.session_state.home_docs = pd.DataFrame(columns=[
+                "id", "Status", "From date", "To date", "Document name",
+                "Date published", "Issue Number", "Name", "Category",
+                "Description", "Detailed Description",
+                "Estimated Impact / Target Audience", "Owner"
+            ])
+            
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+        st.session_state.home_docs = pd.DataFrame()
 
-
-# --- Public vs private part of the app ---
+# --- Route based on authentication status ---
 if not st.session_state.authenticated:
-    # When the user is not logged in, only show the login page
-    login.show()
-
+    # When the user is not logged in, redirect to login page
+    st.switch_page("pages/login.py")
 else:
-    # Draw the shared header at the top of every authenticated view.
-    # The header returns which tab is currently active: "Home", "Ideas", "My Ideas", etc.
-    active_page = header.show_header()
-
-    # Route to the right content area based on that active tab
-    if active_page == "Home":
-        # High-level overview / landing page after login
-        home.show()
-
-    elif active_page == "Ideas":
-        # Main ideas dashboard / list of all ideas
-        dashboard.show()
-
-    elif active_page == "My Ideas":
-        # Per-user list of ideas (drafts + published)
-        myIdeas.show()
-
-    elif active_page == "New Idea":
-        # Idea submission form for the currently logged-in user
-        publish_idea.show()
-
-    elif active_page == "Experiments":
-        # Placeholder until you create pages/experiments.py with a show() function
-        st.title("Experiments")
-        st.write("This is a placeholder for the Experiments page.")
-
-    elif active_page == "Sprints":
-        # Placeholder for sprint planning / tracking
-        st.title("Sprints")
-        st.write("This is a placeholder for the Sprints page.")
-
-    elif active_page == "Team":
-        # Placeholder for team overview
-        st.title("Team")
-        st.write("This is a placeholder for the Team page.")
-
-    elif active_page == "Reports/Analytics":
-        # Placeholder for reports and analytics dashboards
-        st.title("Reports & Analytics")
-        st.write("This is a placeholder for the Reports / Analytics page.")
-
-    elif active_page == "Profile":
-        # Placeholder for user profile and settings
-        st.title("Profile")
-        st.write("This is a placeholder for the Profile page.")
-
-    else:
-        # If the URL contains an unknown page name, fall back to Home for safety
-        home.show()
+    # User is authenticated - redirect to dashboard (Ideas page)
+    st.switch_page("pages/dashboard.py")

@@ -5,16 +5,26 @@ A modular, modern Streamlit application for managing ideas and innovations with 
 
 ## 🎯 Features
 
-- **User Authentication** - Secure login system with rate limiting and session management
-- **CSV Data Persistence** - All ideas stored in persistent CSV files
-- **Idea Management** - Create, edit, delete, and publish ideas
-- **User-Specific Views** - Filter ideas by owner in "My Ideas"
-- **Advanced Filtering** - Search by name, description, category, date range, and status
-- **Interactive Tables** - AgGrid-powered tables with sorting, pagination, and selection
-- **Responsive Dashboard** - Wide-mode layout optimized for all screen sizes
-- **Modular Architecture** - Clean separation of concerns with script-based page routing
-- **Custom Styling** - Professional CSS for headers, forms, buttons, and UI elements
-- **Role-Based Navigation** - Dynamic navigation with st.page_link()
+### Public Access
+- **📊 Statistics Dashboard** - View innovation metrics without login
+- **🔍 Browse Public Ideas** - Explore published ideas with advanced filtering
+- **📈 Category Analytics** - See idea distribution across categories
+- **🕒 Recent Activity** - Track the latest submissions
+
+### Authenticated Users
+- **✏️ Full CRUD Operations** - Create, read, update, and delete ideas
+- **👤 Personal Workspace** - Manage your own ideas in "My Ideas"
+- **📤 Publish Control** - Draft, review, and publish ideas
+- **🔐 User Authentication** - Secure login with rate limiting
+- **💾 CSV Persistence** - All changes saved automatically
+
+### Technical Features
+- **Wide-mode responsive layout**
+- **Interactive AgGrid tables** with sorting and pagination
+- **Real-time data synchronization** across pages
+- **Public/private visibility settings**
+- **Flash notifications** for user actions
+- **Modern UI** with custom CSS styling
 
 ## 🚀 Getting Started
 
@@ -56,49 +66,44 @@ The app will open in your browser at `http://localhost:8501`
 
 > ⚠️ **Important:** Change these credentials in `data/users.csv` for production use
 
-## 📖 Usage
+## 📖 Usage Guide
 
-### Login Page
-- Enter your credentials to access the dashboard
-- Rate limiting: Max 5 failed attempts per 15 minutes
-- "Remember me" feature for persistent sessions
-- SSO option available for alternative authentication
+### 🏠 Home Page
+- **Public Access**: View statistics and public ideas without login
+- **Statistics Cards**: Total ideas, acceptance rate, review status, categories
+- **Category Distribution**: Visual breakdown with percentages
+- **Recent Activity**: 5 most recent published ideas
+- **Filters**: Search by name/description, date range, category
 
-### Ideas (Dashboard)
-- Browse all submitted ideas from all users
-- Filter by:
-  - **Search** - Name or description keywords
-  - **Date Range** - From and To dates
-  - **Category** - TRANSPORT, HEALTH, ENERGY, AI, etc.
+### 💡 Ideas Page
+- Browse all submitted ideas (authenticated users only)
+- Advanced filtering and sorting
+- Edit and delete functionality
 - Select ideas with checkboxes
-- **Actions:**
-  - 🔎 Open - View idea details
-  - ✏️ Edit - Modify selected idea
-  - 🗑 Delete - Remove selected idea
 
-### My Ideas
-- View only ideas you've created
-- Filter by search term or status (On Review, Accepted, Rejected)
-- **Actions:**
-  - ✏️ Edit - Modify your idea
-  - 📤 Publish - Change status to Accepted
-  - 🗑 Delete - Remove your idea
+### 📝 My Ideas Page
+- View only your submitted ideas
+- Filter by status (On Review, Accepted, Rejected)
+- Edit drafts before publishing
+- Publish or delete your ideas
+- Track submission history
 
-### New Idea
-- Submit new ideas with:
-  - Title (required)
-  - Category (required)
-  - Short description (required, max 200 chars)
-  - Detailed description (required)
-  - Estimated impact / target audience (required)
-  - Visibility setting (Public/Private)
-- **Save as Draft** - Save without all fields filled
-- **Publish** - Submit complete idea (requires terms acceptance)
+### ➕ New Idea Page
+- **Required Fields**:
+- Title
+- Category
+- Short Description (max 200 chars)
+- Detailed Description
+- Estimated Impact / Target Audience
+- **Actions**:
+- Save as Draft (partial completion allowed)
+- Publish (requires all fields + terms acceptance)
+- **Visibility**: Public or Private
 
-### Edit Idea
+### ✏️ Edit Idea Page
 - Modify existing ideas
-- All changes saved to CSV
-- Redirect back to My Ideas after saving
+- Auto-saves to CSV
+- Returns to "My Ideas" after saving
 
 
 ## 🎨 Customization
@@ -159,42 +164,39 @@ This project is licensed under the MIT License.
 
 ```
 Agile-dashboard/
-├── .streamlit/
-│ └── config.toml # Streamlit configuration
-├── styles/
+├── streamlit_app.py # Main entry point & routing
+├── generate_initial_data.py # Initial data population script
+├── README.md # This file
+├── requirements.txt # Python dependencies
+├── .gitignore # Git ignore rules
+│
+├── pages/ # Application pages
+│ ├── login.py # Authentication page
+│ ├── home.py # Landing page with statistics
+│ ├── dashboard.py # Ideas management (all ideas)
+│ ├── myideas.py # User's personal ideas
+│ ├── publish_idea.py # Create new idea form
+│ ├── edit_idea.py # Edit existing idea
+│ ├── header.py # Shared navigation header
+│ └── [other pages] # Additional features
+│
+├── styles/ # CSS styling modules
 │ ├── init.py
-│ ├── main.py # Global CSS
+│ ├── main.py # Global styles
 │ ├── login.py # Login page styles
 │ ├── dashboard.py # Dashboard styles
 │ ├── header.py # Navigation styles
 │ ├── edit_idea.py # Form styles
-│ ├── myIdeas.py # My Ideas page styles
 │ └── home.py # Home page styles
-├── pages/
-│ ├── init.py
-│ ├── login.py # Authentication page
-│ ├── dashboard.py # Ideas listing (all users)
-│ ├── myideas.py # User's ideas only
-│ ├── publish_idea.py # Create new idea
-│ ├── edit_idea.py # Edit existing idea
-│ ├── header.py # Shared navigation header
-│ ├── experiments.py # Experiments page (placeholder)
-│ ├── sprints.py # Sprints page (placeholder)
-│ ├── team.py # Team page (placeholder)
-│ ├── reports.py # Reports page (placeholder)
-│ ├── profile.py # Profile page (placeholder)
-│ └── messages.py # Messages page (placeholder)
-├── elements/
-│ ├── upm_logo.png # University logo
-│ ├── Right Side.png # Login page illustration
-│ ├── loginRateLimit.png # Rate limit popup
-│ └── loginAccDeleted.png # Account deleted popup
-├── data/
+│
+├── data/ # Data storage (CSV files)
+│ ├── ideas.csv # All ideas database
 │ ├── users.csv # User credentials
-│ ├── ideas.csv # All ideas (generated + user-created)
 │ └── login_attempts.csv # Failed login tracking
-├── streamlit_app.py # Main application entry point
-├── generate_initial_data.py # Initial data generation script
-├── README.md
-└── .gitignore
+│
+└── elements/ # Static assets
+├── upm_logo.png # University logo
+├── Right Side.png # Login illustration
+├── loginRateLimit.png # Rate limit popup
+└── loginAccDeleted.png # Account deleted popup
 ```

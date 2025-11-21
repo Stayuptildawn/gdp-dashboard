@@ -10,6 +10,11 @@ from styles import edit_idea as edit_idea
 # Show the header navigation
 header.show_header("New Idea")
 
+role = st.session_state.get("role", "student")
+if role == "investor":
+    st.error("Investors cannot publish new ideas. You can browse ideas and save them to 'My Ideas' instead.")
+    st.stop()
+
 # Small hint at the top so users know what '*' means
 st.markdown(
     '<span style="color: #ef4444; font-weight: bold;">*</span> indicates a required field.',

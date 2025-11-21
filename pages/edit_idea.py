@@ -13,6 +13,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+role = st.session_state.get("role", "student")
+if role == "investor":
+    st.error("Investors cannot edit ideas. You can save ideas from the 'Ideas' page and view them in 'My Ideas'.")
+    st.stop()
+
 # Show the header navigation
 header.show_header("My Ideas")
 

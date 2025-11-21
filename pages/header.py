@@ -72,12 +72,20 @@ def show_header(active_page=None):
             {"label": "Ideas", "page": "pages/dashboard.py", "icon": "💡"},
         ]
 
-        # Only for admin + investor (students should not see My Ideas / New Idea)
-        if role in ["admin", "investor"]:
+        # Only for admin + student
+        if role in ["admin", "student"]:
             nav_items.extend(
                 [
                     {"label": "My Ideas", "page": "pages/myideas.py", "icon": "📝"},
                     {"label": "New Idea", "page": "pages/publish_idea.py", "icon": "➕"},
+                ]
+            )
+        
+        # Only for investor (only My Ideas no New Idea)
+        elif role == "investor":
+            nav_items.extend(
+                [
+                    {"label": "My Ideas", "page": "pages/myideas.py", "icon": "📝"},
                 ]
             )
 

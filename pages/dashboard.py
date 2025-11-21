@@ -54,6 +54,8 @@ st.subheader("Ideas")
 # Role check
 role = st.session_state.get("role", "student")
 is_student = role == "student"
+is_investor = role == "investor"
+is_admin = role == "admin"
 
 # Initialize session state
 if "home_docs" not in st.session_state:
@@ -62,6 +64,13 @@ if "home_docs" not in st.session_state:
 
 # Get base dataframe
 df = st.session_state.home_docs.copy()
+
+# Investor: show only Accepted ideas
+if role == "investor" and "Status" in df.columns:
+    df = df[df["Status"] == "Accepted"].copy()
+
+# VERY IMPORTANT: reset index after the high-level filters
+df = df.reset_index(drop=True)
 
 # Ensure datetime columns
 for c in ["From date", "To date", "Date published"]:
@@ -177,6 +186,7 @@ sel = resp.get("selected_rows", [])
 selected_id = get_selected_id(sel)
 
 c1, c2, c3 = st.columns([1, 1, 1])
+can_modify = role != "investor"
 
 # Everyone can Open -> go to openIdea.py
 with c1:
@@ -184,23 +194,59 @@ with c1:
         st.session_state.open_id = selected_id
         st.switch_page("pages/openIdea.py")
 
-# Students cannot edit or delete
-can_modify = not is_student
+# Students can edit or delete
+if role in ["admin", "student"]:
 
-with c2:
-    if st.button("✏️ Edit selected", disabled=(selected_id is None or not can_modify)):
-        st.session_state.edit_id = selected_id
-        st.switch_page("pages/edit_idea.py")
+    with c2:
+        if st.button("✏️ Edit selected", disabled=(selected_id is None or not can_modify)):
+            st.session_state.edit_id = selected_id
+            st.switch_page("pages/edit_idea.py")
 
-with c3:
-    if st.button("🗑 Delete", disabled=(selected_id is None or not can_modify)):
-        df_main = st.session_state.home_docs
-        df_main = df_main[df_main["id"] != selected_id]
-        st.session_state.home_docs = df_main.reset_index(drop=True)
+    with c3:
+        if st.button("🗑 Delete", disabled=(selected_id is None or not can_modify)):
+            df_main = st.session_state.home_docs
+            df_main = df_main[df_main["id"] != selected_id]
+            st.session_state.home_docs = df_main.reset_index(drop=True)
 
-        csv_path = "data/ideas.csv"
-        os.makedirs("data", exist_ok=True)
-        df_main.to_csv(csv_path, index=False)
+            csv_path = "data/ideas.csv"
+            os.makedirs("data", exist_ok=True)
+            df_main.to_csv(csv_path, index=False)
 
-        st.success("Idea deleted successfully!")
-        st.rerun()
+            st.success("Idea deleted successfully!")
+            st.rerun()
+
+# Investors: Save idea to My Ideas (saved list)
+elif role == "investor":
+    with c2:
+        if st.button("💾 Save to My Ideas", disabled=selected_id is None):
+            username = st.session_state.get("username")
+            if not username:
+                st.error("You must be logged in to save ideas.")
+            else:
+                saved_csv = "data/saved_ideas.csv"
+                if os.path.exists(saved_csv):
+                    saved_df = pd.read_csv(saved_csv)
+                else:
+                    saved_df = pd.DataFrame(columns=["username", "idea_id"])
+
+                # Ensure correct dtypes
+                if "idea_id" in saved_df.columns:
+                    saved_df["idea_id"] = pd.to_numeric(saved_df["idea_id"], errors="coerce")
+
+                already = (
+                    (saved_df["username"] == username) &
+                    (saved_df["idea_id"] == selected_id)
+                ).any()
+
+                if already:
+                    st.info("This idea is already in your 'My Ideas'.")
+                else:
+                    new_row = {"username": username, "idea_id": selected_id}
+                    saved_df = pd.concat(
+                        [saved_df, pd.DataFrame([new_row])],
+                        ignore_index=True
+                    )
+                    os.makedirs("data", exist_ok=True)
+                    saved_df.to_csv(saved_csv, index=False)
+                    st.success("Idea saved to 'My Ideas'.")
+                    st.switch_page("pages/myideas.py")

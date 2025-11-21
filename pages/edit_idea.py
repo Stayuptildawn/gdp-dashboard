@@ -13,6 +13,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+role = st.session_state.get("role", "student")
+if role == "investor":
+    st.error("Investors cannot edit ideas. You can save ideas from the 'Ideas' page and view them in 'My Ideas'.")
+    st.stop()
+
 # Show the header navigation
 header.show_header("My Ideas")
 
@@ -49,7 +54,6 @@ def _persist_changes(form, status="On Review", set_date=True):
     st.session_state.edit_validate = False
     st.session_state.pop("edit_id", None)
     st.switch_page("pages/myideas.py")
-
 
 def _get_selected_idea():
     """Grab the selected idea and map it to the form fields."""

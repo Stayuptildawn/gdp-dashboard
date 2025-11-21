@@ -43,8 +43,6 @@ def get_selected_id(sel):
 # Show the header navigation with "My Ideas" as active page
 header.show_header("My Ideas")
 
-st.title("My Ideas")
-
 # Defensive checks so the page fails in a friendly way
 if "username" not in st.session_state or not st.session_state.username:
     st.error("You need to be logged in to see your ideas.")
@@ -54,20 +52,46 @@ if "home_docs" not in st.session_state or st.session_state.home_docs is None:
     st.error("There is no idea data available in this session yet.")
     st.stop()
 
+role = st.session_state.get("role", "student")
+
+if role == "investor":
+    st.title("My Saved Ideas")
+else:
+    st.title("My Ideas")
+
 username = st.session_state.username
+role = st.session_state.get("role", "student")
 df = st.session_state.home_docs.copy()
 
-# If your owner column has a different name, change "Owner" below
-if "Owner" not in df.columns:
-    st.warning(
-        "The ideas table does not have an 'Owner' column yet, "
-        "so 'My Ideas' cannot be filtered by user. Showing all ideas for now."
-    )
-    # Show all ideas if no Owner column exists
-    my_ideas = df.copy()
+if role == "investor":
+    # For investors: use saved_ideas.csv (username, idea_id)
+    saved_csv = "data/saved_ideas.csv"
+    if not os.path.exists(saved_csv):
+        st.info("You haven't saved any ideas yet. Go to 'Ideas' and click 'Save to My Ideas' on an idea you like.")
+        st.stop()
+
+    saved_df = pd.read_csv(saved_csv)
+    if "idea_id" not in saved_df.columns:
+        st.error("Saved ideas file is missing the 'idea_id' column.")
+        st.stop()
+
+    saved_ids = saved_df.loc[saved_df["username"] == username, "idea_id"].tolist()
+    if not saved_ids:
+        st.info("You haven't saved any ideas yet. Go to 'Ideas' and click 'Save to My Ideas'.")
+        st.stop()
+
+    my_ideas = df[df["id"].isin(saved_ids)].copy()
 else:
-    # Filter rows where the Owner matches the current user
-    my_ideas = df[df["Owner"] == username].copy()
+    # Admin + Students: use Owner column
+    if "Owner" not in df.columns:
+        st.warning(
+            "The ideas table does not have an 'Owner' column yet, "
+            "so 'My Ideas' cannot be filtered by user. Showing all ideas for now."
+        )
+        my_ideas = df.copy()
+    else:
+        my_ideas = df[df["Owner"] == username].copy()
+
 
 # Flash message from edit
 flash_msg = st.session_state.pop("flash_success", None)
@@ -181,39 +205,61 @@ resp = AgGrid(
 # Action buttons
 sel = resp.get("selected_rows", [])
 selected_id = get_selected_id(sel)
-
 c1, c2, c3 = st.columns([1, 1, 1])
-with c1:
-    if st.button("✏️ Edit selected", disabled=selected_id is None):
-        st.session_state.edit_id = selected_id
-        st.switch_page("pages/edit_idea.py")
-with c2:
-    if st.button("📤 Publish", disabled=selected_id is None):
-        # Update status to "Accepted"
-        df_main = st.session_state.home_docs
-        idx = df_main.index[df_main["id"] == selected_id]
-        if len(idx) > 0:
-            df_main.at[idx[0], "Status"] = "Accepted"
-            st.session_state.home_docs = df_main
-            
-            # Save to CSV
+
+if role == "investor":
+    # Investors: open or remove from saved list
+    with c1:
+        if st.button("🔎 Open", disabled=selected_id is None):
+            st.session_state.open_id = selected_id
+            st.switch_page("pages/openIdea.py")
+
+    with c2:
+        if st.button("❌ Remove from My Ideas", disabled=selected_id is None):
+            saved_csv = "data/saved_ideas.csv"
+            if os.path.exists(saved_csv):
+                saved_df = pd.read_csv(saved_csv)
+                mask = ~(
+                    (saved_df["username"] == username) &
+                    (saved_df["idea_id"] == selected_id)
+                )
+                saved_df = saved_df[mask]
+                saved_df.to_csv(saved_csv, index=False)
+                st.success("Idea removed from 'My Ideas'.")
+                st.rerun()
+            else:
+                st.error("No saved ideas file found.")
+else:
+    # Admin + Students: keep existing Edit / Publish / Delete behavior
+    with c1:
+        if st.button("✏️ Edit selected", disabled=selected_id is None):
+            st.session_state.edit_id = selected_id
+            st.switch_page("pages/edit_idea.py")
+
+    with c2:
+        if st.button("📤 Publish", disabled=selected_id is None):
+            df_main = st.session_state.home_docs
+            idx = df_main.index[df_main["id"] == selected_id]
+            if len(idx) > 0:
+                df_main.at[idx[0], "Status"] = "Accepted"
+                st.session_state.home_docs = df_main
+
+                csv_path = "data/ideas.csv"
+                os.makedirs("data", exist_ok=True)
+                df_main.to_csv(csv_path, index=False)
+
+                st.success("Idea published successfully!")
+                st.rerun()
+
+    with c3:
+        if st.button("🗑 Delete", disabled=selected_id is None):
+            df_main = st.session_state.home_docs
+            df_main = df_main[df_main["id"] != selected_id]
+            st.session_state.home_docs = df_main.reset_index(drop=True)
+
             csv_path = "data/ideas.csv"
             os.makedirs("data", exist_ok=True)
             df_main.to_csv(csv_path, index=False)
-            
-            st.success("Idea published successfully!")
+
+            st.success("Idea deleted successfully!")
             st.rerun()
-with c3:
-    if st.button("🗑 Delete", disabled=selected_id is None):
-        # Delete the idea
-        df_main = st.session_state.home_docs
-        df_main = df_main[df_main["id"] != selected_id]
-        st.session_state.home_docs = df_main.reset_index(drop=True)
-        
-        # Save to CSV
-        csv_path = "data/ideas.csv"
-        os.makedirs("data", exist_ok=True)
-        df_main.to_csv(csv_path, index=False)
-        
-        st.success("Idea deleted successfully!")
-        st.rerun()

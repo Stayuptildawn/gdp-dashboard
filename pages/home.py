@@ -70,12 +70,28 @@ if "home_docs" not in st.session_state:
 # Get base dataframe with datetime conversion
 df = st.session_state.home_docs.copy()
 
-# Filter by visibility: Only show public ideas if not logged in
+# Role (only meaningful if logged in)
+role = st.session_state.get("role", "student") if is_authenticated else None
+
+# ---- Status / visibility filtering ----
 if not is_authenticated:
+    # Before login: show only Accepted (and Public if column exists)
+    if "Status" in df.columns:
+        df = df[df["Status"] == "Accepted"].copy()
     if "Visibility Setting" in df.columns:
         df = df[df["Visibility Setting"] == "Public"].copy()
-    st.info("🔓 Viewing public ideas only. Login to see all ideas and manage your own.")
+    st.info("🔓 Viewing public accepted ideas only. Login to see all ideas and manage your own.")
+else:
+    # Logged in
+    if role == "investor" and "Status" in df.columns:
+        # Investor: only Accepted ideas
+        df = df[df["Status"] == "Accepted"].copy()
+    # Students/Admin: no Status filter → they see all ideas
 
+# VERY IMPORTANT: reset index after the high-level filters
+df = df.reset_index(drop=True)
+
+# Convert dates after filtering
 for c in ["From date", "To date", "Date published"]:
     if c in df.columns:
         df[c] = pd.to_datetime(df[c], errors='coerce')

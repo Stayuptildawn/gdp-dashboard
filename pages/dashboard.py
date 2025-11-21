@@ -65,6 +65,13 @@ if "home_docs" not in st.session_state:
 # Get base dataframe
 df = st.session_state.home_docs.copy()
 
+# Investor: show only Accepted ideas
+if role == "investor" and "Status" in df.columns:
+    df = df[df["Status"] == "Accepted"].copy()
+
+# VERY IMPORTANT: reset index after the high-level filters
+df = df.reset_index(drop=True)
+
 # Ensure datetime columns
 for c in ["From date", "To date", "Date published"]:
     if c in df.columns:
